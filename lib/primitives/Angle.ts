@@ -62,4 +62,33 @@ export class Angle {
     static fromRadians(value: number): Angle {
         return new Angle(value);
     }
+
+    normalized(): Angle {
+        let normalized = this.degrees % 360.0;
+        return normalized < 0.0 ? Angle.fromDegrees(360.0 + normalized) : Angle.fromDegrees(normalized);
+    }
+
+    abs(): Angle {
+        return this.radians < 0 ? this.negate() : this;
+    }
+
+    isBetween(startAngle: Angle, endAngle: Angle, bulge: number): boolean {
+        let angle = this.normalized();
+        startAngle = startAngle.normalized();
+        endAngle = endAngle.normalized();
+
+        if (bulge < 0)
+        {
+            [startAngle, endAngle] = [endAngle, startAngle];
+        }
+
+        if (endAngle < startAngle)
+        {
+            endAngle = endAngle.add(Angle.fromRadians(Math.PI * 2));
+        }
+
+        return startAngle < endAngle
+            ? angle.radians >= startAngle.radians - 1e-7 && angle.radians <= endAngle.radians + 1e-7
+            : angle.radians >= startAngle.radians - 1e-7 || angle.radians <= endAngle.radians + 1e-7;
+    }
 }
