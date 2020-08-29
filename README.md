@@ -2,4 +2,4 @@
 
 ## Introduction
 
-nesting.
+2D irregular nesting library.
