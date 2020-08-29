@@ -9,3 +9,7 @@ An object-oriented, high-performance 2D irregular nesting library written in Typ
 ```shell script
 npm i @itecgo/nesting
 ```
+
+## API
+
+See code.
