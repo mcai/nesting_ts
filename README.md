@@ -2,7 +2,7 @@
 
 ## Introduction
 
-2D irregular nesting library.
+An object-oriented, high-performance 2D irregular nesting library written in TypeScript.
 
 ## Installation
 
