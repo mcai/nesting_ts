@@ -47,7 +47,7 @@ export class LineSegment2d {
         return this.startPoint.add(this.direction.multiply(num));
     }
 
-    tryIntersect(other: LineSegment2d, tolerance: Angle) {
+    tryIntersect(other: LineSegment2d, tolerance: Angle): [boolean, Point2d] {
         if (this.isParallelTo(other, tolerance)) {
             return [false, Point2d.origin];
         }
