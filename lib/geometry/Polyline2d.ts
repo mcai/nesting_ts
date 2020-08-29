@@ -3,6 +3,7 @@ import {LineSegment2d} from "./LineSegment2d";
 import {Angle} from "./Angle";
 import {Vector2d} from "./Vector2d";
 import Enumerable from "linq";
+import concaveman from "concaveman";
 
 export class Polyline2d {
     points: Point2d[]
@@ -50,6 +51,54 @@ export class Polyline2d {
         for (let index = 0; index < this.points.length - 1; ++index)
         num += this.points[index].distanceTo(this.points[index + 1]);
         return num;
+    }
+
+    equals(other: Polyline2d, tolerance?: number): boolean {
+        let vertexCount = this.vertexCount;
+        if (vertexCount != other.vertexCount)
+            return false;
+        for (let index = 0; index < this.points.length; ++index)
+        {
+            if (tolerance != undefined) {
+                if (!this.points[index].equals(other.points[index], tolerance))
+                    return false;
+            } else {
+                if (!this.points[index].equals(other.points[index]))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    static ArePolygonVerticesColliding(a: Polyline2d, b: Polyline2d): boolean {
+        return Enumerable.from(a.points).any(x => b.enclosesPoint(x))
+            || Enumerable.from(b.points).any(x => a.enclosesPoint(x));
+    }
+
+    static getConvexHullFromPoints(pointList: Point2d[], clockwise: boolean = true): Polyline2d {
+        var num = pointList.length;
+        if (num <= 2) {
+            throw new Error("Must have at least 3 points in the polygon to compute the convex hull");
+        }
+        if (num <= 3) {
+            return new Polyline2d(pointList);
+        }
+        let convexHull = Enumerable
+            .from(
+                concaveman(
+                    Enumerable.from(pointList).select(x => [x.x, x.y]).toArray(),
+                    Infinity
+                )
+            )
+            .select(x => new Point2d(x[0], x[1]))
+            .toArray();
+        let centroid = Point2d.centroid(convexHull);
+        let xAxis = new Vector2d(1.0, 0.0);
+        let list = Enumerable
+            .from(convexHull)
+            .orderBy(x => centroid.vectorTo(x).signedAngleTo(xAxis, clockwise, false))
+            .toArray();
+        return new Polyline2d(list);
     }
 
     enclosesPoint(p: Point2d): boolean {
