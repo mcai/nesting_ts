@@ -4,4 +4,3 @@ export interface Entity {
     layer: string
     extentsPoints: Point2d[]
 }
-
