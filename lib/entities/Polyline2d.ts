@@ -1,7 +1,7 @@
-import {Point2d} from "./Point2d";
-import {LineSegment2d} from "./LineSegment2d";
-import {Angle} from "./Angle";
-import {Vector2d} from "./Vector2d";
+import {Point2d} from "../primitives/Point2d";
+import {LineSegment2d} from "../primitives/LineSegment2d";
+import {Angle} from "../primitives/Angle";
+import {Vector2d} from "../primitives/Vector2d";
 import Enumerable from "linq";
 import concaveman from "concaveman";
 

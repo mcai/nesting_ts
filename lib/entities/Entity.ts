@@ -1,4 +1,4 @@
-import {Point2d} from "./Point2d";
+import {Point2d} from "../primitives/Point2d";
 
 export interface Entity {
     layer: string
