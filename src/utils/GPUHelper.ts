@@ -14,7 +14,7 @@ function time(name: string, func: () => any) {
 }
 
 export class GPUHelper {
-    static test(mode: GPUMode, m: number, n: number, a: number[][], b: number[][]): number[][] {
+    static test(mode: GPUMode, m: number, n: number, k: number, a: number[][], b: number[][]): number[][] {
         const gpu = new GPU({
             mode: mode,
         });
@@ -27,8 +27,8 @@ export class GPUHelper {
                 }
                 return sum;
             })
-            .setOutput([m, m])
-            .setConstants({ m: m, n: n });
+            .setOutput([m, k])
+            .setConstants({ n: n });
 
         return multiplyMatrix(a, b) as number[][];
     }
@@ -36,6 +36,7 @@ export class GPUHelper {
 
 const m = 2048;
 const n = 2048;
+const k = 2048;
 
 const a = Array<number[]>(m)
     .fill([])
@@ -43,13 +44,13 @@ const a = Array<number[]>(m)
 
 const b = Array<number[]>(n)
     .fill([])
-    .map(() => Array<number>(m).fill(Math.random()));
+    .map(() => Array<number>(k).fill(Math.random()));
 
-const resultGPU = time(`GPU_${m}_${n}`, () => GPUHelper.test("gpu", m, n, a, b));
-const resultCPU = time(`CPU_${m}_${n}`, () => GPUHelper.test("cpu", m, n, a, b));
+const resultGPU = time(`GPU_${m}_${n}_${k}`, () => GPUHelper.test("gpu", m, n, k, a, b));
+const resultCPU = time(`CPU_${m}_${n}_${k}`, () => GPUHelper.test("cpu", m, n, k, a, b));
 
 for (let i = 0; i < m; i++) {
-    for (let j = 0; j < n; j++) {
+    for (let j = 0; j < k; j++) {
         const result1 = resultGPU[i][j];
         const result2 = resultCPU[i][j];
 
