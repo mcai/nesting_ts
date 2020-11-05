@@ -14,18 +14,10 @@ function time(name: string, func: () => any) {
 }
 
 export class GPUHelper {
-    static test(mode: GPUMode, m: number, n: number) {
+    static test(mode: GPUMode, m: number, n: number, a: number[][], b: number[][]): number[][] {
         const gpu = new GPU({
             mode: mode,
         });
-
-        const a = Array<number[]>(m)
-            .fill([])
-            .map(() => Array<number>(n).fill(Math.random()));
-
-        const b = Array<number[]>(n)
-            .fill([])
-            .map(() => Array<number>(m).fill(Math.random()));
 
         const multiplyMatrix = gpu
             .createKernel(function (a: number[][], b: number[][]) {
@@ -38,14 +30,33 @@ export class GPUHelper {
             .setOutput([m, m])
             .setConstants({ m: m, n: n });
 
-        const c = multiplyMatrix(a, b) as number[][];
-
-        // console.log(c);
+        return multiplyMatrix(a, b) as number[][];
     }
 }
 
 const m = 2048;
 const n = 2048;
 
-time(`GPU_${m}_${n}`, () => GPUHelper.test("gpu", m, n));
-time(`CPU_${m}_${n}`, () => GPUHelper.test("cpu", m, n));
+const a = Array<number[]>(m)
+    .fill([])
+    .map(() => Array<number>(n).fill(Math.random()));
+
+const b = Array<number[]>(n)
+    .fill([])
+    .map(() => Array<number>(m).fill(Math.random()));
+
+const resultGPU = time(`GPU_${m}_${n}`, () => GPUHelper.test("gpu", m, n, a, b));
+const resultCPU = time(`CPU_${m}_${n}`, () => GPUHelper.test("cpu", m, n, a, b));
+
+for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+        const result1 = resultGPU[i][j];
+        const result2 = resultCPU[i][j];
+
+        if (result1 !== result2) {
+            throw new Error(`resultGPU[${i}][${j}](${result1}) !== resultCPU[${i}][${j}](${result2})`);
+        }
+    }
+}
+
+console.log("resultGPU = resultCPU");
