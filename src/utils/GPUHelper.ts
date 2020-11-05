@@ -44,8 +44,8 @@ export class GPUHelper {
     }
 }
 
-const m = 4096;
-const n = 4096;
+const m = 2048;
+const n = 2048;
 
 time(`GPU_${m}_${n}`, () => GPUHelper.test("gpu", m, n));
 time(`CPU_${m}_${n}`, () => GPUHelper.test("cpu", m, n));
