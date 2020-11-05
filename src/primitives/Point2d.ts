@@ -1,74 +1,74 @@
-import {Vector2d} from "./Vector2d";
-import {Angle} from "./Angle";
+import { Vector2d } from "./Vector2d";
+import { Angle } from "./Angle";
 import Enumerable from "linq";
 
 export class Point2d {
-    X: number
-    Y: number
+    x: number;
+    y: number;
 
     constructor(x: number, y: number) {
-        this.X = x;
-        this.Y = y;
+        this.x = x;
+        this.y = y;
     }
 
     static get origin(): Point2d {
         return new Point2d(0.0, 0.0);
     }
 
-    Add(vector: Vector2d): Point2d {
-        return new Point2d(this.X + vector.X, this.Y + vector.Y);
+    add(vector: Vector2d): Point2d {
+        return new Point2d(this.x + vector.x, this.y + vector.y);
     }
 
-    Subtract(vector: Vector2d): Point2d {
-        return new Point2d(this.X - vector.X, this.Y - vector.Y);
+    subtract(vector: Vector2d): Point2d {
+        return new Point2d(this.x - vector.x, this.y - vector.y);
     }
 
-    SubtractByPoint(other: Point2d): Vector2d {
-        return new Vector2d(this.X - other.X, this.Y - other.Y);
+    subtractByPoint(other: Point2d): Vector2d {
+        return new Vector2d(this.x - other.x, this.y - other.y);
     }
 
-    Equals(other: Point2d, tolerance?: number): boolean {
+    equals(other: Point2d, tolerance?: number): boolean {
         if (tolerance != undefined && tolerance < 0.0) {
             throw new Error("epsilon < 0");
         }
 
         if (tolerance != undefined) {
-            return Math.abs(other.X - this.X) < tolerance && Math.abs(other.Y - this.Y) < tolerance;
+            return Math.abs(other.x - this.x) < tolerance && Math.abs(other.y - this.y) < tolerance;
         }
 
-        return this.X == other.X && this.Y == other.Y;
+        return this.x == other.x && this.y == other.y;
     }
 
-    static FromPolar(radius: number, angle: Angle) {
+    static fromPolar(radius: number, angle: Angle) {
         if (radius < 0.0) {
             throw new Error("Expected a radius greater than or equal to zero.");
         }
 
-        return new Point2d(radius * Math.cos(angle.Radians), radius * Math.sin(angle.Radians));
+        return new Point2d(radius * Math.cos(angle.radians), radius * Math.sin(angle.radians));
     }
 
-    static Centroid(points: Point2d[]): Point2d {
-        let enumerable = Enumerable.from(points);
+    static centroid(points: Point2d[]): Point2d {
+        const enumerable = Enumerable.from(points);
 
         return new Point2d(
-            enumerable.average(point => point.X),
-            enumerable.average(point => point.Y)
-        )
+            enumerable.average((point) => point.x),
+            enumerable.average((point) => point.y),
+        );
     }
 
-    static MidPoint(point1: Point2d, point2: Point2d): Point2d {
-        return Point2d.Centroid([point1, point2]);
+    static midPoint(point1: Point2d, point2: Point2d): Point2d {
+        return Point2d.centroid([point1, point2]);
     }
 
-    VectorTo(otherPoint: Point2d): Vector2d {
-        return otherPoint.SubtractByPoint(this);
+    vectorTo(otherPoint: Point2d): Vector2d {
+        return otherPoint.subtractByPoint(this);
     }
 
-    DistanceTo(otherPoint: Point2d): number {
-        return this.VectorTo(otherPoint).Length;
+    distanceTo(otherPoint: Point2d): number {
+        return this.vectorTo(otherPoint).length;
     }
 
-    ToVector2d(): Vector2d {
-        return new Vector2d(this.X, this.Y);
+    toVector2d(): Vector2d {
+        return new Vector2d(this.x, this.y);
     }
 }

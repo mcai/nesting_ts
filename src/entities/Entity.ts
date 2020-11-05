@@ -1,24 +1,24 @@
-import {Point2d} from "../primitives/Point2d";
-import {BoundingBox} from "../primitives/BoundingBox";
-import {Vector2d} from "../primitives/Vector2d";
-import {Angle} from "../primitives/Angle";
+import { Point2d } from "../primitives/Point2d";
+import { BoundingBox } from "../primitives/BoundingBox";
+import { Vector2d } from "../primitives/Vector2d";
+import { Angle } from "../primitives/Angle";
 
 export interface Entity {
-    Layer: string
+    layer: string;
 
-    ExtentsPoints: Point2d[]
+    extentsPoints: Point2d[];
 
-    BoundingBox: BoundingBox
+    boundingBox: BoundingBox;
 
-    Length: number
+    length: number;
 
-    Area: number
+    area: number;
 
-    IsClosed: boolean
+    isClosed: boolean;
 
-    Add(vector: Vector2d): void;
+    add(vector: Vector2d): void;
 
-    Rotate(angle: Angle): void;
+    rotate(angle: Angle): void;
 
-    IsSameShape(other: Entity): boolean;
+    isSameShape(other: Entity): boolean;
 }

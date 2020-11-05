@@ -1,31 +1,33 @@
-import {Point2d} from "./Point2d";
-import {Vector2d} from "./Vector2d";
+import { Point2d } from "./Point2d";
+import { Vector2d } from "./Vector2d";
 
 export class BoundingBox {
-    MinimumPoint: Point2d
-    Size: Vector2d
+    minimumPoint: Point2d;
+    size: Vector2d;
 
-    MaximumPoint(): Point2d {
-        return this.MinimumPoint.Add(this.Size);
+    get maximumPoint(): Point2d {
+        return this.minimumPoint.add(this.size);
     }
 
-    ExtentsPoints: Point2d[]
+    extentsPoints: Point2d[];
 
     constructor(minimumPoint: Point2d, size: Vector2d) {
-        this.MinimumPoint = minimumPoint;
-        this.Size = size;
+        this.minimumPoint = minimumPoint;
+        this.size = size;
 
-        this.ExtentsPoints = [
-            this.MinimumPoint,
-            this.MinimumPoint.Add(new Vector2d(this.Size.X, 0)),
-            this.MinimumPoint,
-            this.MinimumPoint.Add(new Vector2d(0, this.Size.Y))
+        this.extentsPoints = [
+            this.minimumPoint,
+            this.minimumPoint.add(new Vector2d(this.size.x, 0)),
+            this.minimumPoint,
+            this.minimumPoint.add(new Vector2d(0, this.size.y)),
         ];
     }
 
-    Offset(delta: number): BoundingBox {
-        return new BoundingBox(this.MinimumPoint.Subtract(new Vector2d(delta, delta)),
-            this.Size.Add(new Vector2d(delta * 2, delta * 2)));
+    offset(delta: number): BoundingBox {
+        return new BoundingBox(
+            this.minimumPoint.subtract(new Vector2d(delta, delta)),
+            this.size.add(new Vector2d(delta * 2, delta * 2)),
+        );
     }
 
     // TODO

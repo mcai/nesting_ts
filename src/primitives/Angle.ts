@@ -1,94 +1,92 @@
 export class Angle {
-    Radians: number
+    radians: number;
 
     private constructor(radians: number) {
-        this.Radians = radians;
+        this.radians = radians;
     }
 
-    get Degrees(): number {
-        return this.Radians * (180.0 / Math.PI);
+    get degrees(): number {
+        return this.radians * (180.0 / Math.PI);
     }
 
-    Equals(other: Angle, tolerance?: number | Angle): boolean {
+    equals(other: Angle, tolerance?: number | Angle): boolean {
         if (tolerance == undefined) {
-            return this.Radians == other.Radians;
+            return this.radians == other.radians;
         } else if (tolerance instanceof Angle) {
-            return Math.abs(this.Radians - other.Radians) < tolerance.Radians;
+            return Math.abs(this.radians - other.radians) < tolerance.radians;
         } else {
-            return Math.abs(this.Radians - other.Radians) < tolerance;
+            return Math.abs(this.radians - other.radians) < tolerance;
         }
     }
 
-    Lt(a: Angle): boolean {
-        return this.Radians < a.Radians;
+    lt(a: Angle): boolean {
+        return this.radians < a.radians;
     }
 
-    Gt(a: Angle): boolean {
-        return this.Radians > a.Radians;
+    gt(a: Angle): boolean {
+        return this.radians > a.radians;
     }
 
-    Lte(a: Angle): boolean {
-        return this.Radians <= a.Radians;
+    lte(a: Angle): boolean {
+        return this.radians <= a.radians;
     }
 
-    Gte(a: Angle): boolean {
-        return this.Radians >= a.Radians;
+    gte(a: Angle): boolean {
+        return this.radians >= a.radians;
     }
 
-    Multiply(c: number): Angle {
-        return new Angle(this.Radians * c);
+    multiply(c: number): Angle {
+        return new Angle(this.radians * c);
     }
 
-    Divide(c: number): Angle {
-        return new Angle(this.Radians / c);
+    divide(c: number): Angle {
+        return new Angle(this.radians / c);
     }
 
-    Add(a: Angle): Angle {
-        return new Angle(this.Radians + a.Radians);
+    add(a: Angle): Angle {
+        return new Angle(this.radians + a.radians);
     }
 
-    Subtract(a: Angle): Angle {
-        return new Angle(this.Radians - a.Radians);
+    subtract(a: Angle): Angle {
+        return new Angle(this.radians - a.radians);
     }
 
-    Negate(): Angle {
-        return new Angle(-this.Radians);
+    negate(): Angle {
+        return new Angle(-this.radians);
     }
 
-    static FromDegrees(value: number): Angle {
+    static fromDegrees(value: number): Angle {
         return new Angle(value * (Math.PI / 180.0));
     }
 
-    static FromRadians(value: number): Angle {
+    static fromRadians(value: number): Angle {
         return new Angle(value);
     }
 
-    Normalized(): Angle {
-        let normalized = this.Degrees % 360.0;
-        return normalized < 0.0 ? Angle.FromDegrees(360.0 + normalized) : Angle.FromDegrees(normalized);
+    normalized(): Angle {
+        const normalized = this.degrees % 360.0;
+        return normalized < 0.0 ? Angle.fromDegrees(360.0 + normalized) : Angle.fromDegrees(normalized);
     }
 
-    Abs(): Angle {
-        return this.Radians < 0 ? this.Negate() : this;
+    abs(): Angle {
+        return this.radians < 0 ? this.negate() : this;
     }
 
-    IsBetween(startAngle: Angle, endAngle: Angle, bulge: number): boolean {
-        let angle = this.Normalized();
-        startAngle = startAngle.Normalized();
-        endAngle = endAngle.Normalized();
+    isBetween(startAngle: Angle, endAngle: Angle, bulge: number): boolean {
+        const angle = this.normalized();
+        startAngle = startAngle.normalized();
+        endAngle = endAngle.normalized();
 
-        if (bulge < 0)
-        {
+        if (bulge < 0) {
             [startAngle, endAngle] = [endAngle, startAngle];
         }
 
-        if (endAngle < startAngle)
-        {
-            endAngle = endAngle.Add(Angle.FromRadians(Math.PI * 2));
+        if (endAngle < startAngle) {
+            endAngle = endAngle.add(Angle.fromRadians(Math.PI * 2));
         }
 
         return startAngle < endAngle
-            ? angle.Radians >= startAngle.Radians - 1e-7 && angle.Radians <= endAngle.Radians + 1e-7
-            : angle.Radians >= startAngle.Radians - 1e-7 || angle.Radians <= endAngle.Radians + 1e-7;
+            ? angle.radians >= startAngle.radians - 1e-7 && angle.radians <= endAngle.radians + 1e-7
+            : angle.radians >= startAngle.radians - 1e-7 || angle.radians <= endAngle.radians + 1e-7;
     }
 }
