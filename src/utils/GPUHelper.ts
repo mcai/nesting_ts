@@ -30,13 +30,13 @@ export class GPUHelper {
         const multiplyMatrix = gpu
             .createKernel(function (a: number[][], b: number[][]) {
                 let sum = 0;
-                for (let i = 0; i < 512; i++) {
-                    // TODO: 512 should be replaced with n
+                for (let i = 0; i < this.constants.n; i++) {
                     sum += a[this.thread.y][i] * b[i][this.thread.x];
                 }
                 return sum;
             })
-            .setOutput([m, m]);
+            .setOutput([m, m])
+            .setConstants({ m: m, n: n });
 
         const c = multiplyMatrix(a, b) as number[][];
 
@@ -44,8 +44,8 @@ export class GPUHelper {
     }
 }
 
-const m = 512;
-const n = 512;
+const m = 4096;
+const n = 4096;
 
 time(`GPU_${m}_${n}`, () => GPUHelper.test("gpu", m, n));
 time(`CPU_${m}_${n}`, () => GPUHelper.test("cpu", m, n));
