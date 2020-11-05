@@ -2,7 +2,9 @@ import { GPU } from "gpu.js";
 
 export class GPUHelper {
     static test() {
-        const gpu = new GPU();
+        const gpu = new GPU({
+            mode: "gpu",
+        });
 
         const a = Array<number[]>(512)
             .fill([])
