@@ -4,8 +4,12 @@ export class GPUHelper {
     static test() {
         const gpu = new GPU();
 
-        const a = Array(512).map(() => Array(512).fill(Math.random()));
-        const b = Array(512).map(() => Array(512).fill(Math.random()));
+        const a = Array(512)
+            .fill([])
+            .map(() => Array(512).fill(Math.random()));
+        const b = Array(512)
+            .fill([])
+            .map(() => Array(512).fill(Math.random()));
 
         const multiplyMatrix = gpu
             .createKernel(function (a: number[][], b: number[][]) {
