@@ -60,3 +60,8 @@ for (let i = 0; i < m; i++) {
 }
 
 console.log("resultGPU = resultCPU");
+
+// example result:
+// [GPU_2048_2048] It took 2520 ms.
+// [CPU_2048_2048] It took 102008 ms.
+// resultGPU = resultCPU
