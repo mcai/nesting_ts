@@ -1,77 +1,77 @@
 import {Angle} from "./Angle";
 
 export class Vector2d {
-    x: number
-    y: number
+    X: number
+    Y: number
 
     constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
+        this.X = x;
+        this.Y = y;
     }
 
-    static xAxis: Vector2d = new Vector2d(1.0, 0.0);
+    static XAxis: Vector2d = new Vector2d(1.0, 0.0);
 
-    static yAxis: Vector2d = new Vector2d(0.0, 1.0);
+    static YAxis: Vector2d = new Vector2d(0.0, 1.0);
 
-    get length(): number {
-        return Math.sqrt(this.x * this.x + this.y * this.y);
+    get Length(): number {
+        return Math.sqrt(this.X * this.X + this.Y * this.Y);
     }
 
-    get orthogonal(): Vector2d {
-        return new Vector2d(-this.y, this.x);
+    get Orthogonal(): Vector2d {
+        return new Vector2d(-this.Y, this.X);
     }
 
-    equals(other: Vector2d, tolerance?: number): boolean {
+    Equals(other: Vector2d, tolerance?: number): boolean {
         if (tolerance != undefined && tolerance < 0.0) {
             throw new Error("epsilon < 0");
         }
 
         if (tolerance != undefined) {
-            return Math.abs(other.x - this.x) < tolerance && Math.abs(other.y - this.y) < tolerance;
+            return Math.abs(other.X - this.X) < tolerance && Math.abs(other.Y - this.Y) < tolerance;
         }
 
-        return this.x == other.x && this.y == other.y;
+        return this.X == other.X && this.Y == other.Y;
     }
 
-    multiply(d: number): Vector2d {
-        return new Vector2d(this.x * d, this.y * d);
+    Multiply(d: number): Vector2d {
+        return new Vector2d(this.X * d, this.Y * d);
     }
 
-    divide(d: number): Vector2d {
-        return new Vector2d(this.x / d, this.y / d);
+    Divide(d: number): Vector2d {
+        return new Vector2d(this.X / d, this.Y / d);
     }
 
-    static fromPolar(radius: number, angle: Angle): Vector2d {
+    static FromPolar(radius: number, angle: Angle): Vector2d {
         if (radius < 0.0) {
             throw new Error("Expected a radius greater than or equal to zero.");
         }
 
-        return new Vector2d(radius * Math.cos(angle.radians), radius * Math.sin(angle.radians));
+        return new Vector2d(radius * Math.cos(angle.Radians), radius * Math.sin(angle.Radians));
     }
 
-    isParallelTo(other: Vector2d, tolerance: number = 1E-10): boolean {
-        return Math.abs(1.0 - Math.abs(this.normalize().dotProduct(other.normalize()))) <= tolerance;
+    IsParallelTo(other: Vector2d, tolerance: number = 1E-10): boolean {
+        return Math.abs(1.0 - Math.abs(this.Normalize().DotProduct(other.Normalize()))) <= tolerance;
     }
 
-    isParallelToByAngle(other: Vector2d, tolerance: Angle): boolean {
-        let angle = this.angleTo(other);
-        return angle < tolerance || Angle.fromRadians(Math.PI).subtract(angle).lt(tolerance);
+    IsParallelToByAngle(other: Vector2d, tolerance: Angle): boolean {
+        let angle = this.AngleTo(other);
+        return angle < tolerance || Angle.FromRadians(Math.PI).Subtract(angle).Lt(tolerance);
     }
 
-    isIsPerpendicularTo(other: Vector2d, tolerance: number = 1E-10): boolean {
-        return Math.abs(this.normalize().dotProduct(other.normalize())) < tolerance;
+    IsPerpendicularTo(other: Vector2d, tolerance: number = 1E-10): boolean {
+        return Math.abs(this.Normalize().DotProduct(other.Normalize())) < tolerance;
     }
 
-    isIsPerpendicularToByAngle(other: Vector2d, tolerance: Angle): boolean {
-        return Math.abs(this.angleTo(other).radians - Math.PI / 2.0) < tolerance.radians;
+    IsPerpendicularToByAngle(other: Vector2d, tolerance: Angle): boolean {
+        return Math.abs(this.AngleTo(other).Radians - Math.PI / 2.0) < tolerance.Radians;
     }
 
-    signedAngleTo(other: Vector2d, clockWise: boolean = false, returnNegative: boolean = false): Angle {
+    SignedAngleTo(other: Vector2d, clockWise: boolean = false, returnNegative: boolean = false): Angle {
         let num1 = clockWise ? -1 : 1;
-        let num2 = Math.atan2(this.y, this.x);
+        let num2 = Math.atan2(this.Y, this.X);
         if (num2 < 0.0)
             num2 += 2.0 * Math.PI;
-        let num3 = Math.atan2(other.y, other.x);
+        let num3 = Math.atan2(other.Y, other.X);
         if (num3 < 0.0)
             num3 += 2.0 * Math.PI;
         let num4 = num1 * (num3 - num2);
@@ -79,50 +79,50 @@ export class Vector2d {
             num4 += 2.0 * Math.PI;
         if (num4 > Math.PI && returnNegative)
             num4 -= 2.0 * Math.PI;
-        return Angle.fromRadians(num4);
+        return Angle.FromRadians(num4);
     }
 
-    angleTo(other: Vector2d) {
-        return Angle.fromRadians(Math.abs(Math.atan2(this.x * other.y - other.x * this.y, this.x * other.x + this.y * other.y)));
+    AngleTo(other: Vector2d) {
+        return Angle.FromRadians(Math.abs(Math.atan2(this.X * other.Y - other.X * this.Y, this.X * other.X + this.Y * other.Y)));
     }
 
-    rotate(angle: Angle): Vector2d {
-        let num1 = Math.cos(angle.radians);
-        let num2 = Math.sin(angle.radians);
-        return new Vector2d(this.x * num1 - this.y * num2, this.x * num2 + this.y * num1);
+    Rotate(angle: Angle): Vector2d {
+        let num1 = Math.cos(angle.Radians);
+        let num2 = Math.sin(angle.Radians);
+        return new Vector2d(this.X * num1 - this.Y * num2, this.X * num2 + this.Y * num1);
     }
 
-    dotProduct(other: Vector2d): number {
-        return this.x * other.x + this.y * other.y;
+    DotProduct(other: Vector2d): number {
+        return this.X * other.X + this.Y * other.Y;
     }
 
-    crossProduct(other: Vector2d): number {
-        return this.x * other.y - this.y * other.x;
+    CrossProduct(other: Vector2d): number {
+        return this.X * other.Y - this.Y * other.X;
     }
 
-    projectOn(other: Vector2d): Vector2d {
-        return other.multiply(this.dotProduct(other) / other.dotProduct(other));
+    ProjectOn(other: Vector2d): Vector2d {
+        return other.Multiply(this.DotProduct(other) / other.DotProduct(other));
     }
 
-    normalize(): Vector2d {
-        let length = this.length;
-        return new Vector2d(this.x / length, this.y / length);
+    Normalize(): Vector2d {
+        let length = this.Length;
+        return new Vector2d(this.X / length, this.Y / length);
     }
 
-    scaleBy(d: number) {
-        return new Vector2d(d * this.x, d * this.y);
+    ScaleBy(d: number) {
+        return new Vector2d(d * this.X, d * this.Y);
     }
 
-    negate(): Vector2d {
-        return new Vector2d(-1.0 * this.x, -1.0 * this.y);
+    Negate(): Vector2d {
+        return new Vector2d(-1.0 * this.X, -1.0 * this.Y);
     }
 
-    subtract(v: Vector2d): Vector2d {
-        return new Vector2d(this.x - v.x, this.y - v.y);
+    Subtract(v: Vector2d): Vector2d {
+        return new Vector2d(this.X - v.X, this.Y - v.Y);
     }
 
-    add(v: Vector2d): Vector2d {
-        return new Vector2d(this.x + v.x, this.y + v.y);
+    Add(v: Vector2d): Vector2d {
+        return new Vector2d(this.X + v.X, this.Y + v.Y);
     }
 }
 
