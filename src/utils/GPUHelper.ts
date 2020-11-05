@@ -53,7 +53,7 @@ for (let i = 0; i < m; i++) {
         const result1 = resultGPU[i][j];
         const result2 = resultCPU[i][j];
 
-        if (result1 !== result2) {
+        if (Math.abs(result1 - result2) >= 0.01) {
             throw new Error(`resultGPU[${i}][${j}](${result1}) !== resultCPU[${i}][${j}](${result2})`);
         }
     }
