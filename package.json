@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "start": "ts-node src/utils/GPUHelper.ts",
+    "start": "ts-node src/GPUHelper.ts",
     "lint": "eslint 'src/**/*.{js,ts,tsx}' --fix",
     "prettier": "prettier --config .prettierrc 'src/**/*.{js,ts,tsx}' --write"
   },
