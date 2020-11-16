@@ -51,13 +51,7 @@ export class NoFitRasterGpuCalculatorHelper {
                 Point2dExtensions.add(orbitingDot, Point2dExtensions.subtract(dot, orbitingDotsMinimumPoint)),
             );
 
-            if (
-                NoFitRasterGpuCalculatorHelper.rasterIntersects(
-                    stationaryDots,
-                    newOrbitingDots,
-                    Settings.gapBetweenDots,
-                )
-            ) {
+            if (this.rasterIntersects(stationaryDots, newOrbitingDots, Settings.gapBetweenDots)) {
                 result = [...result, dot];
             }
         });
