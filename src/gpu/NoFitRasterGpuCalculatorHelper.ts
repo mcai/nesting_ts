@@ -1,10 +1,11 @@
-import { Point2d } from "./geometry/Point2d";
-import { Settings } from "./Settings";
+import { Point2d } from "../geometry/Point2d";
+import { Settings } from "../Settings";
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
-import { SimpleFormatting } from "./utils/SimpleFormatting";
+import { SimpleFormatting } from "../utils/SimpleFormatting";
 import moment from "moment";
+import { Point2dExtensions } from "../geometry/Point2dExtensions";
 
 export class NoFitRasterGpuCalculatorHelper {
     static listen(port: number) {
@@ -30,8 +31,8 @@ export class NoFitRasterGpuCalculatorHelper {
             next();
         });
 
-        app.get(`/rest/noFitRaster`, async (req, res) => {
-            const { boardDotsJson, stationaryDotsJson, orbitingDotsJson, orbitingDotsMinimumPointJson } = req.query;
+        app.post(`/rest/noFitRaster`, async (req, res) => {
+            const { boardDotsJson, stationaryDotsJson, orbitingDotsJson, orbitingDotsMinimumPointJson } = req.body;
 
             const boardDots = JSON.parse(boardDotsJson as any);
             const stationaryDots = JSON.parse(stationaryDotsJson as any);
@@ -60,7 +61,9 @@ export class NoFitRasterGpuCalculatorHelper {
         let result: Point2d[] = [];
 
         boardDots.forEach((dot) => {
-            const newOrbitingDots = orbitingDots.map((x) => x.add(dot.subtract(orbitingDotsMinimumPoint)));
+            const newOrbitingDots = orbitingDots.map((orbitingDot) =>
+                Point2dExtensions.add(orbitingDot, Point2dExtensions.subtract(dot, orbitingDotsMinimumPoint)),
+            );
 
             if (
                 NoFitRasterGpuCalculatorHelper.rasterIntersects(
@@ -77,13 +80,13 @@ export class NoFitRasterGpuCalculatorHelper {
     }
 
     private static rasterIntersects(a: Point2d[], b: Point2d[], tolerance: number): boolean {
-        a.forEach((p1) => {
-            b.forEach((p2) => {
-                if (p1.distanceTo(p2) < tolerance) {
+        for (const p1 of a) {
+            for (const p2 of b) {
+                if (Point2dExtensions.distanceTo(p1, p2) < tolerance) {
                     return true;
                 }
-            });
-        });
+            }
+        }
 
         return false;
     }
