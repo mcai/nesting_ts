@@ -16,21 +16,6 @@ export class NoFitRasterGpuCalculatorHelper {
 
         app.use(cors());
 
-        app.use((req, res, next) => {
-            const path = req.path;
-            const method = req.method;
-            const params = JSON.stringify(req.params);
-            const query = JSON.stringify(req.query);
-            const body = JSON.stringify(req.body);
-            const now = SimpleFormatting.toFormattedDateTimeString(moment());
-
-            console.debug(
-                `[${now} SimpleServer] call: path=${path},method=${method},params=${params},query=${query},body=${body}`,
-            );
-
-            next();
-        });
-
         app.post(`/rest/noFitRaster`, async (req, res) => {
             const { boardDotsJson, stationaryDotsJson, orbitingDotsJson, orbitingDotsMinimumPointJson } = req.body;
 
@@ -60,6 +45,7 @@ export class NoFitRasterGpuCalculatorHelper {
     ): Point2d[] {
         let result: Point2d[] = [];
 
+        // TODO: replace with GPU implementation
         boardDots.forEach((dot) => {
             const newOrbitingDots = orbitingDots.map((orbitingDot) =>
                 Point2dExtensions.add(orbitingDot, Point2dExtensions.subtract(dot, orbitingDotsMinimumPoint)),
