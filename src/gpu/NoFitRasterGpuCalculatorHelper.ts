@@ -1,11 +1,10 @@
-import { Point2d } from "../geometry/Point2d";
-import { Settings } from "../Settings";
+import { Settings } from "../utils/Settings";
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
 import { SimpleFormatting } from "../utils/SimpleFormatting";
 import moment from "moment";
-import { Point2dExtensions } from "../geometry/Point2dExtensions";
+import { GPU } from "gpu.js";
 
 export class NoFitRasterGpuCalculatorHelper {
     static listen(port: number) {
@@ -37,37 +36,92 @@ export class NoFitRasterGpuCalculatorHelper {
         });
     }
 
+    private static gpu = new GPU({
+        mode: "gpu",
+    });
+
     private static noFitRaster(
-        boardDots: Point2d[],
-        stationaryDots: Point2d[],
-        orbitingDots: Point2d[],
-        orbitingDotsMinimumPoint: Point2d,
-    ): Point2d[] {
-        let result: Point2d[] = [];
+        boardDots: { X: number; Y: number }[],
+        stationaryDots: { X: number; Y: number }[],
+        orbitingDots: { X: number; Y: number }[],
+        orbitingDotsMinimumPoint: { X: number; Y: number },
+    ): { X: number; Y: number }[] {
+        const boardDotsX = boardDots.map((x) => x.X);
+        const boardDotsY = boardDots.map((x) => x.Y);
 
-        // TODO: replace with GPU implementation
-        boardDots.forEach((dot) => {
-            const newOrbitingDots = orbitingDots.map((orbitingDot) =>
-                Point2dExtensions.add(orbitingDot, Point2dExtensions.subtract(dot, orbitingDotsMinimumPoint)),
-            );
+        const stationaryDotsX = stationaryDots.map((x) => x.X);
+        const stationaryDotsY = stationaryDots.map((x) => x.Y);
 
-            if (this.rasterIntersects(stationaryDots, newOrbitingDots, Settings.gapBetweenDots)) {
-                result = [...result, dot];
-            }
-        });
+        const orbitingDotsX = orbitingDots.map((x) => x.X);
+        const orbitingDotsY = orbitingDots.map((x) => x.Y);
 
-        return result;
+        const [orbitingDotsMinimumPointX, orbitingDotsMinimumPointY] = [
+            orbitingDotsMinimumPoint.X,
+            orbitingDotsMinimumPoint.Y,
+        ];
+
+        const { resultX, resultY } = this._noFitRaster(
+            boardDotsX,
+            boardDotsY,
+            stationaryDotsX,
+            stationaryDotsY,
+            orbitingDotsX,
+            orbitingDotsY,
+            orbitingDotsMinimumPointX,
+            orbitingDotsMinimumPointY,
+            Settings.gapBetweenDots,
+        );
+
+        return resultX.map((value, index) => ({ X: value, Y: resultY[index] }));
     }
 
-    private static rasterIntersects(a: Point2d[], b: Point2d[], tolerance: number): boolean {
-        for (const p1 of a) {
-            for (const p2 of b) {
-                if (Point2dExtensions.distanceTo(p1, p2) < tolerance) {
-                    return true;
+    private static _noFitRaster(
+        boardDotsX: number[],
+        boardDotsY: number[],
+
+        stationaryDotsX: number[],
+        stationaryDotsY: number[],
+
+        orbitingDotsX: number[],
+        orbitingDotsY: number[],
+
+        orbitingDotsMinimumPointX: number,
+        orbitingDotsMinimumPointY: number,
+
+        gapBetweenDots: number,
+    ): { resultX: number[]; resultY: number[] } {
+        let resultX: number[] = [];
+        let resultY: number[] = [];
+
+        for (let i = 0; i < boardDotsX.length; i++) {
+            let found = false;
+
+            for (let j = 0; j < stationaryDotsX.length; j++) {
+                if (found) {
+                    break;
                 }
+
+                for (let k = 0; k < orbitingDotsX.length; k++) {
+                    const distance = Math.sqrt(
+                        (orbitingDotsX[k] + boardDotsX[i] - orbitingDotsMinimumPointX - stationaryDotsX[j]) *
+                            (orbitingDotsX[k] + boardDotsX[i] - orbitingDotsMinimumPointX - stationaryDotsX[j]) +
+                            (orbitingDotsY[k] + boardDotsY[i] - orbitingDotsMinimumPointY - stationaryDotsY[j]) *
+                                (orbitingDotsY[k] + boardDotsY[i] - orbitingDotsMinimumPointY - stationaryDotsY[j]),
+                    );
+
+                    if (distance < gapBetweenDots) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (found) {
+                resultX = [...resultX, boardDotsX[i]];
+                resultY = [...resultY, boardDotsY[i]];
             }
         }
 
-        return false;
+        return { resultX, resultY };
     }
 }
