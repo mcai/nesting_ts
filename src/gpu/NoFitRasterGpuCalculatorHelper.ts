@@ -90,38 +90,72 @@ export class NoFitRasterGpuCalculatorHelper {
 
         gapBetweenDots: number,
     ): { resultX: number[]; resultY: number[] } {
-        let resultX: number[] = [];
-        let resultY: number[] = [];
+        const shift = this.gpu
+            .createKernel(function (
+                boardDotsX: number[],
+                boardDotsY: number[],
 
-        for (let i = 0; i < boardDotsX.length; i++) {
-            let found = false;
+                stationaryDotsX: number[],
+                stationaryDotsY: number[],
 
-            for (let j = 0; j < stationaryDotsX.length; j++) {
-                if (found) {
-                    break;
-                }
+                orbitingDotsX: number[],
+                orbitingDotsY: number[],
 
-                for (let k = 0; k < orbitingDotsX.length; k++) {
-                    const distance = Math.sqrt(
-                        (orbitingDotsX[k] + boardDotsX[i] - orbitingDotsMinimumPointX - stationaryDotsX[j]) *
-                            (orbitingDotsX[k] + boardDotsX[i] - orbitingDotsMinimumPointX - stationaryDotsX[j]) +
-                            (orbitingDotsY[k] + boardDotsY[i] - orbitingDotsMinimumPointY - stationaryDotsY[j]) *
-                                (orbitingDotsY[k] + boardDotsY[i] - orbitingDotsMinimumPointY - stationaryDotsY[j]),
-                    );
+                orbitingDotsMinimumPointX: number,
+                orbitingDotsMinimumPointY: number,
 
-                    if (distance < gapBetweenDots) {
-                        found = true;
-                        break;
+                gapBetweenDots: number,
+            ) {
+                for (let j = 0; j < this.constants.numStationaryDots; j++) {
+                    for (let k = 0; k < this.constants.numOrbitingDots; k++) {
+                        const distance = Math.sqrt(
+                            (orbitingDotsX[k] +
+                                boardDotsX[this.thread.x] -
+                                orbitingDotsMinimumPointX -
+                                stationaryDotsX[j]) *
+                                (orbitingDotsX[k] +
+                                    boardDotsX[this.thread.x] -
+                                    orbitingDotsMinimumPointX -
+                                    stationaryDotsX[j]) +
+                                (orbitingDotsY[k] +
+                                    boardDotsY[this.thread.x] -
+                                    orbitingDotsMinimumPointY -
+                                    stationaryDotsY[j]) *
+                                    (orbitingDotsY[k] +
+                                        boardDotsY[this.thread.x] -
+                                        orbitingDotsMinimumPointY -
+                                        stationaryDotsY[j]),
+                        );
+
+                        if (distance < gapBetweenDots) {
+                            return 1;
+                        }
                     }
                 }
-            }
 
-            if (found) {
-                resultX = [...resultX, boardDotsX[i]];
-                resultY = [...resultY, boardDotsY[i]];
-            }
-        }
+                return 0;
+            })
+            .setOutput([boardDotsX.length])
+            .setConstants({
+                numStationaryDots: stationaryDotsX.length,
+                numOrbitingDots: orbitingDotsX.length,
+            });
 
-        return { resultX, resultY };
+        const out: any = shift(
+            boardDotsX,
+            boardDotsY,
+            stationaryDotsX,
+            stationaryDotsY,
+            orbitingDotsX,
+            orbitingDotsY,
+            orbitingDotsMinimumPointX,
+            orbitingDotsMinimumPointY,
+            gapBetweenDots,
+        );
+
+        return {
+            resultX: boardDotsX.filter((value, index) => out[index] == 1),
+            resultY: boardDotsY.filter((value, index) => out[index] == 1),
+        };
     }
 }
