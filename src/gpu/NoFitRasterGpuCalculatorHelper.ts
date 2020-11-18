@@ -28,6 +28,17 @@ export class NoFitRasterGpuCalculatorHelper {
             return res.json(result);
         });
 
+        app.post(`/rest/rasterDifference`, async (req, res) => {
+            const { aJson, bJson } = req.body;
+
+            const a = JSON.parse(aJson as any);
+            const b = JSON.parse(bJson as any);
+
+            const result = this.rasterDifference(a, b);
+
+            return res.json(result);
+        });
+
         const server = createServer(app);
 
         server.listen(port, () => {
@@ -90,7 +101,7 @@ export class NoFitRasterGpuCalculatorHelper {
 
         gapBetweenDots: number,
     ): { resultX: number[]; resultY: number[] } {
-        const shift = this.gpu
+        const kernelFunc = this.gpu
             .createKernel(function (
                 boardDotsX: number[],
                 boardDotsY: number[],
@@ -141,7 +152,7 @@ export class NoFitRasterGpuCalculatorHelper {
                 numOrbitingDots: orbitingDotsX.length,
             });
 
-        const out: any = shift(
+        const out: any = kernelFunc(
             boardDotsX,
             boardDotsY,
             stationaryDotsX,
@@ -157,5 +168,65 @@ export class NoFitRasterGpuCalculatorHelper {
             resultX: boardDotsX.filter((value, index) => out[index] == 1),
             resultY: boardDotsY.filter((value, index) => out[index] == 1),
         };
+    }
+
+    private static _rasterDifference(
+        aX: number[],
+        aY: number[],
+
+        bX: number[],
+        bY: number[],
+
+        gapBetweenDots: number,
+    ): { resultX: number[]; resultY: number[] } {
+        const kernelFunc = this.gpu
+            .createKernel(function (
+                aX: number[],
+                aY: number[],
+
+                bX: number[],
+                bY: number[],
+
+                gapBetweenDots: number,
+            ) {
+                for (let k = 0; k < this.constants.numB; k++) {
+                    const distance = Math.sqrt(
+                        (bX[k] - aX[this.thread.x]) * (bX[k] - aX[this.thread.x]) +
+                            (bY[k] - aY[this.thread.x]) * (bY[k] - aY[this.thread.x]),
+                    );
+
+                    if (distance < gapBetweenDots) {
+                        return 0;
+                    }
+                }
+
+                return 1;
+            })
+            .setOutput([aX.length])
+            .setConstants({
+                numB: bX.length,
+            });
+
+        const out: any = kernelFunc(aX, aY, bX, bY, gapBetweenDots);
+
+        return {
+            resultX: aX.filter((value, index) => out[index] == 1),
+            resultY: aY.filter((value, index) => out[index] == 1),
+        };
+    }
+
+    private static rasterDifference(
+        a: { X: number; Y: number }[],
+        b: { X: number; Y: number }[],
+    ): { X: number; Y: number }[] {
+        const aX = a.map((x) => x.X);
+        const aY = a.map((x) => x.Y);
+
+        const bX = b.map((x) => x.X);
+        const bY = b.map((x) => x.Y);
+
+        const { resultX, resultY } = this._rasterDifference(aX, aY, bX, bY, Settings.gapBetweenDots);
+
+        return resultX.map((value, index) => ({ X: value, Y: resultY[index] }));
     }
 }
