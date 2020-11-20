@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { SimpleFormatting } from "../utils/SimpleFormatting";
 import moment from "moment";
 import { GPU } from "gpu.js";
+import { time } from "./GPUHelper";
 
 export class NoFitRasterGpuCalculatorHelper {
     static listen(port: number) {
@@ -23,7 +24,9 @@ export class NoFitRasterGpuCalculatorHelper {
             const orbitingDots = JSON.parse(orbitingDotsJson as any);
             const orbitingDotsMinimumPoint = JSON.parse(orbitingDotsMinimumPointJson as any);
 
-            const result = this.noFitRaster(boardDots, stationaryDots, orbitingDots, orbitingDotsMinimumPoint);
+            const result = time(`noFitRaster`, () =>
+                this.noFitRaster(boardDots, stationaryDots, orbitingDots, orbitingDotsMinimumPoint),
+            );
 
             return res.json(result);
         });
@@ -34,7 +37,7 @@ export class NoFitRasterGpuCalculatorHelper {
             const a = JSON.parse(aJson as any);
             const b = JSON.parse(bJson as any);
 
-            const result = this.rasterDifference(a, b);
+            const result = time(`rasterDifference`, () => this.rasterDifference(a, b));
 
             return res.json(result);
         });

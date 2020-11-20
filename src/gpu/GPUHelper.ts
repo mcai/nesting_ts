@@ -1,6 +1,8 @@
 import { GPU, GPUMode } from "gpu.js";
+import { SimpleFormatting } from "../utils/SimpleFormatting";
+import moment from "moment";
 
-function time(name: string, func: () => any) {
+export function time(name: string, func: () => any) {
     const start = new Date().getTime();
 
     const result = func();
@@ -8,7 +10,9 @@ function time(name: string, func: () => any) {
     const end = new Date().getTime();
     const time = end - start;
 
-    console.log(`[${name}] It took ${time} ms.`);
+    const now = SimpleFormatting.toFormattedDateTimeString(moment());
+
+    console.log(`[${now}] ${name} 用时${time}毫秒`);
 
     return result;
 }
@@ -34,35 +38,37 @@ export class GPUHelper {
     }
 }
 
-const m = 2048;
-const n = 2048;
-const k = 2048;
+function test() {
+    const m = 2048;
+    const n = 2048;
+    const k = 2048;
 
-const a = Array<number[]>(m)
-    .fill([])
-    .map(() => Array<number>(n).fill(Math.random()));
+    const a = Array<number[]>(m)
+        .fill([])
+        .map(() => Array<number>(n).fill(Math.random()));
 
-const b = Array<number[]>(n)
-    .fill([])
-    .map(() => Array<number>(k).fill(Math.random()));
+    const b = Array<number[]>(n)
+        .fill([])
+        .map(() => Array<number>(k).fill(Math.random()));
 
-const resultGPU = time(`GPU_${m}_${n}_${k}`, () => GPUHelper.test("gpu", m, n, k, a, b));
-const resultCPU = time(`CPU_${m}_${n}_${k}`, () => GPUHelper.test("cpu", m, n, k, a, b));
+    const resultGPU = time(`GPU_${m}_${n}_${k}`, () => GPUHelper.test("gpu", m, n, k, a, b));
+    const resultCPU = time(`CPU_${m}_${n}_${k}`, () => GPUHelper.test("cpu", m, n, k, a, b));
 
-for (let i = 0; i < m; i++) {
-    for (let j = 0; j < k; j++) {
-        const result1 = resultGPU[i][j];
-        const result2 = resultCPU[i][j];
+    for (let i = 0; i < m; i++) {
+        for (let j = 0; j < k; j++) {
+            const result1 = resultGPU[i][j];
+            const result2 = resultCPU[i][j];
 
-        if (Math.abs(result1 - result2) >= 0.01) {
-            throw new Error(`resultGPU[${i}][${j}](${result1}) !== resultCPU[${i}][${j}](${result2})`);
+            if (Math.abs(result1 - result2) >= 0.01) {
+                throw new Error(`resultGPU[${i}][${j}](${result1}) !== resultCPU[${i}][${j}](${result2})`);
+            }
         }
     }
+
+    console.log("resultGPU = resultCPU");
+
+    // example result:
+    // [GPU_2048_2048] It took 2520 ms.
+    // [CPU_2048_2048] It took 102008 ms.
+    // resultGPU = resultCPU
 }
-
-console.log("resultGPU = resultCPU");
-
-// example result:
-// [GPU_2048_2048] It took 2520 ms.
-// [CPU_2048_2048] It took 102008 ms.
-// resultGPU = resultCPU
