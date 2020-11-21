@@ -56,7 +56,7 @@ export class NoFitRasterGpuCalculatorHelperServer {
 
         server.listen(port, () => {
             const now = SimpleFormatting.toFormattedDateTimeString(moment());
-            console.debug(`[${now} NoFitRasterGpuCalculatorHelper] listening: port=${port}`);
+            console.debug(`[${now} NoFitRasterGpuCalculatorHelperServer] listening: port=${port}`);
         });
     }
 }
