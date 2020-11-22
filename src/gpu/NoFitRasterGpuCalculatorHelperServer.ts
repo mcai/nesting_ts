@@ -36,7 +36,7 @@ export class NoFitRasterGpuCalculatorHelperServer {
                     ),
             );
 
-            return res.json(result);
+            return res.json(result.map((dot: any) => ({ X: dot[0], Y: dot[1] })));
         });
 
         app.post(`/rest/rasterDifference`, async (req, res) => {
@@ -52,7 +52,7 @@ export class NoFitRasterGpuCalculatorHelperServer {
                 ),
             );
 
-            return res.json(result);
+            return res.json(result.map((dot: any) => ({ X: dot[0], Y: dot[1] })));
         });
 
         const server = createServer(app);
