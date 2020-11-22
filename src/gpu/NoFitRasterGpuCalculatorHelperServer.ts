@@ -29,10 +29,10 @@ export class NoFitRasterGpuCalculatorHelperServer {
                     `自由配件:${orbitingDots.length}个顶点,`,
                 () =>
                     NoFitRasterGpuCalculatorHelper.noFitRaster(
-                        boardDots,
-                        stationaryDots,
-                        orbitingDots,
-                        orbitingDotsMinimumPoint,
+                        boardDots.map((dot: any) => [dot.X, dot.Y]),
+                        stationaryDots.map((dot: any) => [dot.X, dot.Y]),
+                        orbitingDots.map((dot: any) => [dot.X, dot.Y]),
+                        [orbitingDotsMinimumPoint.X, orbitingDotsMinimumPoint.Y],
                     ),
             );
 
@@ -46,7 +46,10 @@ export class NoFitRasterGpuCalculatorHelperServer {
             const b = JSON.parse(bJson as any);
 
             const result = time(`rasterDifference,a:${a.length}个顶点,b:${b.length}个顶点,`, () =>
-                NoFitRasterGpuCalculatorHelper.rasterDifference(a, b),
+                NoFitRasterGpuCalculatorHelper.rasterDifference(
+                    a.map((dot: any) => [dot.X, dot.Y]),
+                    b.map((dot: any) => [dot.X, dot.Y]),
+                ),
             );
 
             return res.json(result);

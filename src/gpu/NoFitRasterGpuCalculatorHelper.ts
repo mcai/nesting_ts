@@ -7,82 +7,38 @@ export class NoFitRasterGpuCalculatorHelper {
     });
 
     static noFitRaster(
-        boardDots: { X: number; Y: number }[],
-        stationaryDots: { X: number; Y: number }[],
-        orbitingDots: { X: number; Y: number }[],
-        orbitingDotsMinimumPoint: { X: number; Y: number },
-    ): { X: number; Y: number }[] {
-        const boardDotsX = boardDots.map((x) => x.X);
-        const boardDotsY = boardDots.map((x) => x.Y);
-
-        const stationaryDotsX = stationaryDots.map((x) => x.X);
-        const stationaryDotsY = stationaryDots.map((x) => x.Y);
-
-        const orbitingDotsX = orbitingDots.map((x) => x.X);
-        const orbitingDotsY = orbitingDots.map((x) => x.Y);
-
-        const [orbitingDotsMinimumPointX, orbitingDotsMinimumPointY] = [
-            orbitingDotsMinimumPoint.X,
-            orbitingDotsMinimumPoint.Y,
-        ];
-
-        const { resultX, resultY } = this._noFitRaster(
-            boardDotsX,
-            boardDotsY,
-            stationaryDotsX,
-            stationaryDotsY,
-            orbitingDotsX,
-            orbitingDotsY,
-            orbitingDotsMinimumPointX,
-            orbitingDotsMinimumPointY,
-            Settings.gapBetweenDots,
-        );
-
-        return resultX.map((value, index) => ({ X: value, Y: resultY[index] }));
-    }
-
-    private static _noFitRaster(
-        boardDotsX: number[],
-        boardDotsY: number[],
-        stationaryDotsX: number[],
-        stationaryDotsY: number[],
-        orbitingDotsX: number[],
-        orbitingDotsY: number[],
-        orbitingDotsMinimumPointX: number,
-        orbitingDotsMinimumPointY: number,
-        gapBetweenDots: number,
-    ): { resultX: number[]; resultY: number[] } {
+        boardDots: [number, number][],
+        stationaryDots: [number, number][],
+        orbitingDots: [number, number][],
+        orbitingDotsMinimumPoint: [number, number],
+    ): [number, number][] {
         const kernelFunc = this.gpu
             .createKernel(function (
-                boardDotsX: number[],
-                boardDotsY: number[],
-                stationaryDotsX: number[],
-                stationaryDotsY: number[],
-                orbitingDotsX: number[],
-                orbitingDotsY: number[],
-                orbitingDotsMinimumPointX: number,
-                orbitingDotsMinimumPointY: number,
+                boardDots: [number, number][],
+                stationaryDots: [number, number][],
+                orbitingDots: [number, number][],
+                orbitingDotsMinimumPoint: [number, number],
                 gapBetweenDots: number,
             ) {
                 for (let j = 0; j < this.constants.numStationaryDots; j++) {
                     for (let k = 0; k < this.constants.numOrbitingDots; k++) {
                         const distance = Math.sqrt(
-                            (orbitingDotsX[k] +
-                                boardDotsX[this.thread.x] -
-                                orbitingDotsMinimumPointX -
-                                stationaryDotsX[j]) *
-                                (orbitingDotsX[k] +
-                                    boardDotsX[this.thread.x] -
-                                    orbitingDotsMinimumPointX -
-                                    stationaryDotsX[j]) +
-                                (orbitingDotsY[k] +
-                                    boardDotsY[this.thread.x] -
-                                    orbitingDotsMinimumPointY -
-                                    stationaryDotsY[j]) *
-                                    (orbitingDotsY[k] +
-                                        boardDotsY[this.thread.x] -
-                                        orbitingDotsMinimumPointY -
-                                        stationaryDotsY[j]),
+                            (orbitingDots[k][0] +
+                                boardDots[this.thread.x][0] -
+                                orbitingDotsMinimumPoint[0] -
+                                stationaryDots[j][0]) *
+                                (orbitingDots[k][0] +
+                                    boardDots[this.thread.x][0] -
+                                    orbitingDotsMinimumPoint[0] -
+                                    stationaryDots[j][0]) +
+                                (orbitingDots[k][1] +
+                                    boardDots[this.thread.x][1] -
+                                    orbitingDotsMinimumPoint[1] -
+                                    stationaryDots[j][1]) *
+                                    (orbitingDots[k][1] +
+                                        boardDots[this.thread.x][1] -
+                                        orbitingDotsMinimumPoint[1] -
+                                        stationaryDots[j][1]),
                         );
 
                         if (distance < gapBetweenDots) {
@@ -93,55 +49,30 @@ export class NoFitRasterGpuCalculatorHelper {
 
                 return 0;
             })
-            .setOutput([boardDotsX.length])
+            .setOutput([boardDots.length])
             .setConstants({
-                numStationaryDots: stationaryDotsX.length,
-                numOrbitingDots: orbitingDotsX.length,
+                numStationaryDots: stationaryDots.length,
+                numOrbitingDots: orbitingDots.length,
             });
 
         const out: any = kernelFunc(
-            boardDotsX,
-            boardDotsY,
-            stationaryDotsX,
-            stationaryDotsY,
-            orbitingDotsX,
-            orbitingDotsY,
-            orbitingDotsMinimumPointX,
-            orbitingDotsMinimumPointY,
-            gapBetweenDots,
+            boardDots,
+            stationaryDots,
+            orbitingDots,
+            orbitingDotsMinimumPoint,
+            Settings.gapBetweenDots,
         );
 
-        return {
-            resultX: boardDotsX.filter((value, index) => out[index] == 1),
-            resultY: boardDotsY.filter((value, index) => out[index] == 1),
-        };
+        return boardDots.filter((value, index) => out[index] == 1);
     }
 
-    static rasterDifference(a: { X: number; Y: number }[], b: { X: number; Y: number }[]): { X: number; Y: number }[] {
-        const aX = a.map((x) => x.X);
-        const aY = a.map((x) => x.Y);
-
-        const bX = b.map((x) => x.X);
-        const bY = b.map((x) => x.Y);
-
-        const { resultX, resultY } = this._rasterDifference(aX, aY, bX, bY, Settings.gapBetweenDots);
-
-        return resultX.map((value, index) => ({ X: value, Y: resultY[index] }));
-    }
-
-    private static _rasterDifference(
-        aX: number[],
-        aY: number[],
-        bX: number[],
-        bY: number[],
-        gapBetweenDots: number,
-    ): { resultX: number[]; resultY: number[] } {
+    static rasterDifference(a: [number, number][], b: [number, number][]): [number, number][] {
         const kernelFunc = this.gpu
-            .createKernel(function (aX: number[], aY: number[], bX: number[], bY: number[], gapBetweenDots: number) {
+            .createKernel(function (a: [number, number][], b: [number, number][], gapBetweenDots: number) {
                 for (let k = 0; k < this.constants.numB; k++) {
                     const distance = Math.sqrt(
-                        (bX[k] - aX[this.thread.x]) * (bX[k] - aX[this.thread.x]) +
-                            (bY[k] - aY[this.thread.x]) * (bY[k] - aY[this.thread.x]),
+                        (b[k][0] - a[this.thread.x][0]) * (b[k][0] - a[this.thread.x][0]) +
+                            (b[k][1] - a[this.thread.x][1]) * (b[k][1] - a[this.thread.x][1]),
                     );
 
                     if (distance < gapBetweenDots) {
@@ -151,16 +82,13 @@ export class NoFitRasterGpuCalculatorHelper {
 
                 return 1;
             })
-            .setOutput([aX.length])
+            .setOutput([a.length])
             .setConstants({
-                numB: bX.length,
+                numB: b.length,
             });
 
-        const out: any = kernelFunc(aX, aY, bX, bY, gapBetweenDots);
+        const out: any = kernelFunc(a, b, Settings.gapBetweenDots);
 
-        return {
-            resultX: aX.filter((value, index) => out[index] == 1),
-            resultY: aY.filter((value, index) => out[index] == 1),
-        };
+        return a.filter((value, index) => out[index] == 1);
     }
 }
