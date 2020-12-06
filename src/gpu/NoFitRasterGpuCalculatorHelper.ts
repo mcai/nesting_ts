@@ -1,5 +1,6 @@
 import { GPU } from "gpu.js";
 import { gapBetweenDots } from "../utils/Settings";
+import { polygonBounds } from "geometric";
 
 export class NoFitRasterGpuCalculatorHelper {
     private static gpu = new GPU({
@@ -10,7 +11,6 @@ export class NoFitRasterGpuCalculatorHelper {
         boardDots: [number, number][],
         stationaryDots: [number, number][],
         orbitingDots: [number, number][],
-        orbitingDotsMinimumPoint: [number, number],
     ): [number, number][] {
         const kernelFunc = this.gpu
             .createKernel(function (
@@ -41,6 +41,14 @@ export class NoFitRasterGpuCalculatorHelper {
                 numStationaryDots: stationaryDots.length,
                 numOrbitingDots: orbitingDots.length,
             });
+
+        const orbitingDotsBounds = polygonBounds(orbitingDots);
+
+        if (!orbitingDotsBounds) {
+            return [];
+        }
+
+        const orbitingDotsMinimumPoint = orbitingDotsBounds[0];
 
         const out: any = kernelFunc(boardDots, stationaryDots, orbitingDots, orbitingDotsMinimumPoint, gapBetweenDots);
 

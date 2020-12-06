@@ -40,24 +40,22 @@ export class NoFitRasterGpuCalculatorHelperServer {
         });
 
         app.post(`/rest/noFitRaster`, async (req, res) => {
-            const { boardDotsJson, stationaryDotsJson, orbitingDotsJson, orbitingDotsMinimumPointJson } = req.body;
+            const { boardDotsJson, stationaryDotsJson, orbitingDotsJson } = req.body;
 
             const boardDots = JSON.parse(boardDotsJson as any);
             const stationaryDots = JSON.parse(stationaryDotsJson as any);
             const orbitingDots = JSON.parse(orbitingDotsJson as any);
-            const orbitingDotsMinimumPoint = JSON.parse(orbitingDotsMinimumPointJson as any);
 
             const result = time(
                 () =>
                     `noFitRaster:板材:${boardDots.length}个顶点,` +
                     `固定配件:${stationaryDots.length}个顶点,` +
-                    `自由配件:${orbitingDots.length}个顶点,`,
+                    `自由配件:${orbitingDots.length}个顶点`,
                 () =>
                     NoFitRasterGpuCalculatorHelper.noFitRaster(
                         boardDots.map((dot: any) => [dot.X, dot.Y]),
                         stationaryDots.map((dot: any) => [dot.X, dot.Y]),
                         orbitingDots.map((dot: any) => [dot.X, dot.Y]),
-                        [orbitingDotsMinimumPoint.X, orbitingDotsMinimumPoint.Y],
                     ),
             );
 

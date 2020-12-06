@@ -94,18 +94,5 @@ export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygo
     const stationaryDots = boardDots.filter((x) => pointInPolygon(x, stationaryPolygon));
     const orbitingDots = boardDots.filter((x) => pointInPolygon(x, orbitingPolygon));
 
-    const orbitingDotsBounds = polygonBounds(orbitingDots);
-
-    if (!orbitingDotsBounds) {
-        return [];
-    }
-
-    const orbitingDotsMinimumPoint = orbitingDotsBounds[0];
-
-    return NoFitRasterGpuCalculatorHelper.noFitRaster(
-        boardDots,
-        stationaryDots,
-        orbitingDots,
-        orbitingDotsMinimumPoint,
-    );
+    return NoFitRasterGpuCalculatorHelper.noFitRaster(boardDots, stationaryDots, orbitingDots);
 }
