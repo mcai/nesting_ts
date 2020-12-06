@@ -15,6 +15,8 @@ export class NoFitRasterGpuCalculatorHelperServer {
 
         app.use(cors());
 
+        // TODO: use queueing of tasks
+
         app.post(`/rest/noFitRaster`, async (req, res) => {
             const { boardDotsJson, stationaryDotsJson, orbitingDotsJson, orbitingDotsMinimumPointJson } = req.body;
 
