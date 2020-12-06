@@ -25,8 +25,10 @@ export class NoFitRasterGpuCalculatorHelperServer {
             const orbitingPolygon = JSON.parse(orbitingPolygonJson as any);
 
             const result = time(
-                `noFitPolygon:固定配件:${stationaryPolygon.length}个顶点,` +
-                    `自由配件:${orbitingPolygon.length}个顶点,`,
+                (result: any) =>
+                    `noFitPolygon:固定配件:${stationaryPolygon.length}个顶点,` +
+                    `自由配件:${orbitingPolygon.length}个顶点,` +
+                    `结果:${result.length}个顶点,`,
                 () =>
                     noFitPolygon(
                         stationaryPolygon.map((dot: any) => [dot.X, dot.Y]),
@@ -46,7 +48,8 @@ export class NoFitRasterGpuCalculatorHelperServer {
             const orbitingDotsMinimumPoint = JSON.parse(orbitingDotsMinimumPointJson as any);
 
             const result = time(
-                `noFitRaster:板材:${boardDots.length}个顶点,` +
+                () =>
+                    `noFitRaster:板材:${boardDots.length}个顶点,` +
                     `固定配件:${stationaryDots.length}个顶点,` +
                     `自由配件:${orbitingDots.length}个顶点,`,
                 () =>
@@ -67,11 +70,13 @@ export class NoFitRasterGpuCalculatorHelperServer {
             const a = JSON.parse(aJson as any);
             const b = JSON.parse(bJson as any);
 
-            const result = time(`rasterDifference,a:${a.length}个顶点,b:${b.length}个顶点,`, () =>
-                NoFitRasterGpuCalculatorHelper.rasterDifference(
-                    a.map((dot: any) => [dot.X, dot.Y]),
-                    b.map((dot: any) => [dot.X, dot.Y]),
-                ),
+            const result = time(
+                (result) => `rasterDifference,a:${a.length}个顶点,b:${b.length}个顶点,结果:${result.length}个顶点`,
+                () =>
+                    NoFitRasterGpuCalculatorHelper.rasterDifference(
+                        a.map((dot: any) => [dot.X, dot.Y]),
+                        b.map((dot: any) => [dot.X, dot.Y]),
+                    ),
             );
 
             return res.json(result.map((dot: any) => ({ X: dot[0], Y: dot[1] })));

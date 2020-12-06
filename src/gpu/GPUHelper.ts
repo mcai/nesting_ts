@@ -2,7 +2,7 @@ import { GPU, GPUMode } from "gpu.js";
 import { SimpleFormatting } from "../utils/SimpleFormatting";
 import moment from "moment";
 
-export function time(name: string, func: () => any) {
+export function time(name: (result: any) => string, func: () => any) {
     const start = new Date().getTime();
 
     const result = func();
@@ -12,7 +12,7 @@ export function time(name: string, func: () => any) {
 
     const now = SimpleFormatting.toFormattedDateTimeString(moment());
 
-    console.log(`[${now}] ${name} 用时${time}毫秒`);
+    console.log(`[${now}] ${name(result)} 用时${time}毫秒`);
 
     return result;
 }
@@ -51,8 +51,14 @@ function test() {
         .fill([])
         .map(() => Array<number>(k).fill(Math.random()));
 
-    const resultGPU = time(`GPU_${m}_${n}_${k}`, () => GPUHelper.test("gpu", m, n, k, a, b));
-    const resultCPU = time(`CPU_${m}_${n}_${k}`, () => GPUHelper.test("cpu", m, n, k, a, b));
+    const resultGPU = time(
+        () => `GPU_${m}_${n}_${k}`,
+        () => GPUHelper.test("gpu", m, n, k, a, b),
+    );
+    const resultCPU = time(
+        () => `CPU_${m}_${n}_${k}`,
+        () => GPUHelper.test("cpu", m, n, k, a, b),
+    );
 
     for (let i = 0; i < m; i++) {
         for (let j = 0; j < k; j++) {
