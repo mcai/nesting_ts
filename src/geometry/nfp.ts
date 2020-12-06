@@ -1,5 +1,4 @@
 import { Line, lineLength, Point, pointInPolygon, pointOnLine, Polygon, polygonBounds } from "geometric";
-import { gapBetweenDots } from "../utils/Settings";
 import { NoFitRasterGpuCalculatorHelper } from "../gpu/NoFitRasterGpuCalculatorHelper";
 
 export const origin: Point = [0.0, 0.0];
@@ -34,21 +33,20 @@ export function lineDirection(line: Line): Vector {
     return vectorNormalize(vectorTo(line[0], line[1]));
 }
 
-export function lineSplit(line: Line, gap: number): Point[] {
+export function lineSplit(line: Line): Point[] {
     let points = [line[0]];
 
-    let point = pointAddVector(line[0], vectorMultiply(lineDirection(line), gap));
+    let point = pointAddVector(line[0], lineDirection(line));
 
     while (pointOnLine(point, line)) {
         points = [...points, point];
-        point = pointAddVector(point, vectorMultiply(lineDirection(line), gap));
+        point = pointAddVector(point, lineDirection(line));
     }
 
     return points;
 }
 
-// TODO: to be optimized
-export function getRasterPoints(boardBounds: [Point, Point], gap: number): Point[] {
+export function getRasterPoints(boardBounds: [Point, Point]): Point[] {
     let dots: Point[] = [];
 
     let startPoint: Point = [boardBounds[0][0], boardBounds[1][1]];
@@ -59,12 +57,12 @@ export function getRasterPoints(boardBounds: [Point, Point], gap: number): Point
     while (startPoint[1] >= boardBounds[0][1]) {
         const line: Line = i % 2 == 0 ? [startPoint, endPoint] : [endPoint, startPoint];
 
-        const split = lineSplit(line, gap);
+        const split = lineSplit(line);
 
         dots = [...dots, ...split];
 
-        startPoint = pointSubtractVector(startPoint, vectorMultiply(yAxis, gap));
-        endPoint = pointSubtractVector(endPoint, vectorMultiply(yAxis, gap));
+        startPoint = pointSubtractVector(startPoint, yAxis);
+        endPoint = pointSubtractVector(endPoint, yAxis);
 
         i++;
     }
@@ -72,7 +70,6 @@ export function getRasterPoints(boardBounds: [Point, Point], gap: number): Point
     return dots;
 }
 
-// TODO: to be optimized
 export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon): [number, number][] {
     const stationaryBounds = polygonBounds(stationaryPolygon);
     const orbitingBounds = polygonBounds(orbitingPolygon);
@@ -89,7 +86,7 @@ export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygo
         pointAddVector(stationaryBounds[0], stationaryBoundsSize),
     ];
 
-    const boardDots = getRasterPoints(boardBounds, gapBetweenDots);
+    const boardDots = getRasterPoints(boardBounds);
 
     const stationaryDots = boardDots.filter((x) => pointInPolygon(x, stationaryPolygon));
     const orbitingDots = boardDots.filter((x) => pointInPolygon(x, orbitingPolygon));
