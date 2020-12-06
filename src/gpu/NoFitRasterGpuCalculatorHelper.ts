@@ -22,25 +22,12 @@ export class NoFitRasterGpuCalculatorHelper {
             ) {
                 for (let j = 0; j < this.constants.numStationaryDots; j++) {
                     for (let k = 0; k < this.constants.numOrbitingDots; k++) {
-                        const distance = Math.sqrt(
-                            (orbitingDots[k][0] +
-                                boardDots[this.thread.x][0] -
-                                orbitingDotsMinimumPoint[0] -
-                                stationaryDots[j][0]) *
-                                (orbitingDots[k][0] +
-                                    boardDots[this.thread.x][0] -
-                                    orbitingDotsMinimumPoint[0] -
-                                    stationaryDots[j][0]) +
-                                (orbitingDots[k][1] +
-                                    boardDots[this.thread.x][1] -
-                                    orbitingDotsMinimumPoint[1] -
-                                    stationaryDots[j][1]) *
-                                    (orbitingDots[k][1] +
-                                        boardDots[this.thread.x][1] -
-                                        orbitingDotsMinimumPoint[1] -
-                                        stationaryDots[j][1]),
-                        );
+                        const x1 = orbitingDots[k][0] + boardDots[this.thread.x][0];
+                        const x2 = orbitingDotsMinimumPoint[0] + stationaryDots[j][0];
+                        const y1 = orbitingDots[k][1] + boardDots[this.thread.x][1];
+                        const y2 = orbitingDotsMinimumPoint[1] + stationaryDots[j][1];
 
+                        const distance = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
                         if (distance < gapBetweenDots) {
                             return 1;
                         }
@@ -64,10 +51,12 @@ export class NoFitRasterGpuCalculatorHelper {
         const kernelFunc = this.gpu
             .createKernel(function (a: [number, number][], b: [number, number][], gapBetweenDots: number) {
                 for (let k = 0; k < this.constants.numB; k++) {
-                    const distance = Math.sqrt(
-                        (b[k][0] - a[this.thread.x][0]) * (b[k][0] - a[this.thread.x][0]) +
-                            (b[k][1] - a[this.thread.x][1]) * (b[k][1] - a[this.thread.x][1]),
-                    );
+                    const x1 = b[k][0];
+                    const x2 = a[this.thread.x][0];
+                    const y1 = b[k][1];
+                    const y2 = a[this.thread.x][1];
+
+                    const distance = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 
                     if (distance < gapBetweenDots) {
                         return 0;

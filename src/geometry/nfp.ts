@@ -47,6 +47,7 @@ export function lineSplit(line: Line, gap: number): Point[] {
     return points;
 }
 
+// TODO: to be optimized
 export function getRasterPoints(boardBounds: [Point, Point], gap: number): Point[] {
     let dots: Point[] = [];
 
@@ -71,6 +72,7 @@ export function getRasterPoints(boardBounds: [Point, Point], gap: number): Point
     return dots;
 }
 
+// TODO: to be optimized
 export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon): [number, number][] {
     const stationaryBounds = polygonBounds(stationaryPolygon);
     const orbitingBounds = polygonBounds(orbitingPolygon);
