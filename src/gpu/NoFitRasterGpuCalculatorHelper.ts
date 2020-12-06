@@ -1,5 +1,5 @@
 import { GPU } from "gpu.js";
-import { Settings } from "../utils/Settings";
+import { gapBetweenDots } from "../utils/Settings";
 
 export class NoFitRasterGpuCalculatorHelper {
     private static gpu = new GPU({
@@ -55,13 +55,7 @@ export class NoFitRasterGpuCalculatorHelper {
                 numOrbitingDots: orbitingDots.length,
             });
 
-        const out: any = kernelFunc(
-            boardDots,
-            stationaryDots,
-            orbitingDots,
-            orbitingDotsMinimumPoint,
-            Settings.gapBetweenDots,
-        );
+        const out: any = kernelFunc(boardDots, stationaryDots, orbitingDots, orbitingDotsMinimumPoint, gapBetweenDots);
 
         return boardDots.filter((value, index) => out[index] == 1);
     }
@@ -87,7 +81,7 @@ export class NoFitRasterGpuCalculatorHelper {
                 numB: b.length,
             });
 
-        const out: any = kernelFunc(a, b, Settings.gapBetweenDots);
+        const out: any = kernelFunc(a, b, gapBetweenDots);
 
         return a.filter((value, index) => out[index] == 1);
     }

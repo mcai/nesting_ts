@@ -25,12 +25,14 @@
     "clipper-lib": "^6.4.2",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "geometric": "^2.2.5",
     "gpu.js": "^2.10.4",
     "moment": "^2.29.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.8",
     "@types/express": "^4.17.9",
+    "@types/geometric": "^2.2.0",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
     "eslint": "^7.11.0",

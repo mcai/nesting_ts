@@ -1,3 +1,1 @@
-export class Settings {
-    static gapBetweenDots: number = 5.0;
-}
+export const gapBetweenDots: number = 5.0;
