@@ -25,7 +25,7 @@ export class NoFitRasterGpuCalculatorHelper {
                         const y1 = orbitingDots[k][1] + boardDots[this.thread.x][1];
                         const y2 = orbitingDotsMinimumPoint[1] + stationaryDots[j][1];
 
-                        if (x1 == x2 && y1 == y2) {
+                        if (x1 - x2 < 1e-7 && y1 - y2 < 1e-7) {
                             return 1;
                         }
                     }
@@ -61,7 +61,7 @@ export class NoFitRasterGpuCalculatorHelper {
                     const y1 = b[k][1];
                     const y2 = a[this.thread.x][1];
 
-                    if (x1 == x2 && y1 == y2) {
+                    if (x1 - x2 < 1e-7 && y1 - y2 < 1e-7) {
                         return 0;
                     }
                 }
