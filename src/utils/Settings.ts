@@ -1,1 +1,1 @@
-export const gapBetweenDots: number = 3.0;
+export const gapBetweenDots: number = 5.0;
