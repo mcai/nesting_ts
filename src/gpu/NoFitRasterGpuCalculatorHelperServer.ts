@@ -5,6 +5,7 @@ import { SimpleFormatting } from "../utils/SimpleFormatting";
 import moment from "moment";
 import { time } from "./GPUHelper";
 import { NoFitRasterGpuCalculatorHelper } from "./NoFitRasterGpuCalculatorHelper";
+import { noFitPolygon } from "../geometry/nfp";
 
 export class NoFitRasterGpuCalculatorHelperServer {
     static listen(port: number) {
@@ -16,6 +17,25 @@ export class NoFitRasterGpuCalculatorHelperServer {
         app.use(cors());
 
         // TODO: use queueing of tasks
+
+        app.post(`/rest/noFitPolygon`, async (req, res) => {
+            const { stationaryPolygonJson, orbitingPolygonJson } = req.body;
+
+            const stationaryPolygon = JSON.parse(stationaryPolygonJson as any);
+            const orbitingPolygon = JSON.parse(orbitingPolygonJson as any);
+
+            const result = time(
+                `noFitPolygon:固定配件:${stationaryPolygon.length}个顶点,` +
+                    `自由配件:${orbitingPolygon.length}个顶点,`,
+                () =>
+                    noFitPolygon(
+                        stationaryPolygon.map((dot: any) => [dot.X, dot.Y]),
+                        orbitingPolygon.map((dot: any) => [dot.X, dot.Y]),
+                    ),
+            );
+
+            return res.json(result.map((dot: any) => ({ X: dot[0], Y: dot[1] })));
+        });
 
         app.post(`/rest/noFitRaster`, async (req, res) => {
             const { boardDotsJson, stationaryDotsJson, orbitingDotsJson, orbitingDotsMinimumPointJson } = req.body;
