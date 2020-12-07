@@ -18,24 +18,21 @@ export class NoFitRasterGpuCalculatorHelper {
                 orbitingDots: [number, number][],
                 orbitingDotsMinimumPoint: [number, number],
             ) {
-                for (let j = 0; j < this.constants.numStationaryDots; j++) {
-                    for (let k = 0; k < this.constants.numOrbitingDots; k++) {
-                        const x1 = orbitingDots[k][0] + boardDots[this.thread.x][0];
-                        const x2 = orbitingDotsMinimumPoint[0] + stationaryDots[j][0];
-                        const y1 = orbitingDots[k][1] + boardDots[this.thread.x][1];
-                        const y2 = orbitingDotsMinimumPoint[1] + stationaryDots[j][1];
+                for (let k = 0; k < this.constants.numOrbitingDots; k++) {
+                    const x1 = orbitingDots[k][0] + boardDots[this.thread.y][0];
+                    const x2 = orbitingDotsMinimumPoint[0] + stationaryDots[this.thread.x][0];
+                    const y1 = orbitingDots[k][1] + boardDots[this.thread.y][1];
+                    const y2 = orbitingDotsMinimumPoint[1] + stationaryDots[this.thread.x][1];
 
-                        if (x1 == x2 && y1 == y2) {
-                            return 1;
-                        }
+                    if (x1 == x2 && y1 == y2) {
+                        return 1;
                     }
                 }
 
                 return 0;
             })
-            .setOutput([boardDots.length])
+            .setOutput([stationaryDots.length, boardDots.length])
             .setConstants({
-                numStationaryDots: stationaryDots.length,
                 numOrbitingDots: orbitingDots.length,
             });
 
@@ -49,7 +46,7 @@ export class NoFitRasterGpuCalculatorHelper {
 
         const out: any = kernelFunc(boardDots, stationaryDots, orbitingDots, orbitingDotsMinimumPoint);
 
-        return boardDots.filter((value, index) => out[index] == 1);
+        return boardDots.filter((value, index) => out[index].some((x: number) => x == 1));
     }
 
     static rasterDifference(a: [number, number][], b: [number, number][]): [number, number][] {
