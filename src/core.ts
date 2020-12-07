@@ -12,7 +12,7 @@ export function rasterize(bounds: [Point, Point]): Point[] {
 
     for (let i = 0; i <= boundsSize[0]; i++) {
         for (let j = 0; j <= boundsSize[1]; j++) {
-            dots = [...dots, [bounds[0][0] + j, bounds[0][1] + j]];
+            dots = [...dots, [bounds[0][0] + i, bounds[0][1] + j]];
         }
     }
 
