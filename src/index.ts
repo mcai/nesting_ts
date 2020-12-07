@@ -1,3 +1,3 @@
-import { NoFitRasterGpuCalculatorHelperServer } from "./gpu/NoFitRasterGpuCalculatorHelperServer";
+import { listen } from "./server";
 
-NoFitRasterGpuCalculatorHelperServer.listen(5001);
+listen(5001);
