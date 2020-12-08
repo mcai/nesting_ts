@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { createServer } from "http";
 import moment from "moment";
-import { noFitPolygon, rasterDifference } from "./core";
+import { noFitPolygon, rasterDifference } from "./nfp";
 import { time, toFormattedDateTimeString } from "./utils";
 
 export function listen(port: number) {

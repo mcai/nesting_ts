@@ -1,5 +1,5 @@
 import { listen } from "./server";
-import { testClipper } from "./core";
+import { testClipper } from "./nfp";
 
 testClipper();
 
