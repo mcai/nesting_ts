@@ -1,5 +1,6 @@
 import { Point, pointInPolygon, Polygon, polygonBounds } from "geometric";
 import { GPU } from "gpu.js";
+import Shape from "@doodle3d/clipper-js";
 
 const gpu = new GPU({
     mode: "gpu",
@@ -117,4 +118,30 @@ export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygo
     const orbitingDots = boardDots.filter((x) => pointInPolygon(x, orbitingPolygon));
 
     return noFitRaster(boardDots, stationaryDots, orbitingDots);
+}
+
+export function testClipper() {
+    const subjectPaths = [
+        [
+            { X: 30, Y: 30 },
+            { X: 10, Y: 30 },
+            { X: 10, Y: 10 },
+            { X: 30, Y: 10 },
+        ],
+    ];
+    const clipPaths = [
+        [
+            { X: 20, Y: 20 },
+            { X: 0, Y: 20 },
+            { X: 0, Y: 0 },
+            { X: 20, Y: 0 },
+        ],
+    ];
+
+    const subject = new Shape(subjectPaths, true);
+    const clip = new Shape(clipPaths, true);
+
+    const result = subject.intersect(clip);
+
+    console.log(JSON.stringify(result));
 }

@@ -18,3 +18,11 @@ export function time(name: (result: any) => string, func: () => any) {
 
     return result;
 }
+
+export const partToPartGap = 5.0;
+export const partToSheetGap = 5.0;
+
+export const tolerance = 0.05;
+export const noFitPolygonTolerance = 0.25;
+
+export const clipperScale = 100.0;
