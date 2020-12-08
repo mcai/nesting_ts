@@ -70,3 +70,5 @@ export function boundsOffset(bounds: [Point, Point], delta: number): [Point, Poi
 export function partNestingBounds(part: Part): [Point, Point] {
     return boundsOffset(part.outsideLoop.bounds, partToPartGap / 2);
 }
+
+// TODO: part operations

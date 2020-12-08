@@ -16,7 +16,7 @@ export interface DesignDocumentPart {
     part: Part;
 }
 
-export function getEmbeddedPartsDictionary(parts: Part[]): { [outsideLoopNestingId: string]: string[] } {
+function getEmbeddedPartsDictionary(parts: Part[]): { [outsideLoopNestingId: string]: string[] } {
     const result: { [outsideLoopNestingId: string]: string[] } = {};
 
     const tree = new RBush();
@@ -49,16 +49,43 @@ export function getEmbeddedPartsDictionary(parts: Part[]): { [outsideLoopNesting
     return result;
 }
 
-export function nest(nesting: Nesting, notNestedParts: DesignDocumentPart[], raster: boolean) {
-    const newlyNestedDesignDocumentParts: DesignDocumentPart[] = [];
+function nestOne(
+    notNestedDesignDocumentPart: DesignDocumentPart,
+    rotation: number,
+    sheetBounds: [Point, Point],
+    nestedPartsBounds: [Point, Point],
+    allNestedParts: Part[],
+    embeddedPartsDictionary: { [outsideLoopNestingId: string]: string[] },
+    raster: boolean,
+): {
+    nested: boolean;
+    nestedPart?: Part;
+    embeddingPart?: Part;
+} {
+    // TODO
+
+    return {
+        nested: false,
+        nestedPart: undefined,
+        embeddingPart: undefined,
+    };
+}
+
+export function nest(nesting: Nesting, notNestedDesignDocumentParts: DesignDocumentPart[], raster: boolean) {
+    let newlyNestedDesignDocumentParts: DesignDocumentPart[] = [];
 
     const [sheetWidth, sheetHeight] = [nesting.sheetWidth, nesting.sheetHeight];
 
     const alreadyCutBoundaryParts = nesting.alreadyCutBoundaryParts;
 
-    const allNestedParts = [...nesting.alreadyNestedParts, ...alreadyCutBoundaryParts];
+    let allNestedParts = [...nesting.alreadyNestedParts, ...alreadyCutBoundaryParts];
 
-    const nestedPartBounds = polygonBounds(([] as Point[]).concat(...allNestedParts.map((x) => partNestingBounds(x))));
+    let nestedPartsBounds = polygonBounds(
+        ([] as Point[]).concat(...allNestedParts.map((x) => partNestingBounds(x))),
+    ) ?? [
+        [0.0, 0.0],
+        [0.0, 0.0],
+    ];
 
     const embeddedPartsDictionary = getEmbeddedPartsDictionary(allNestedParts);
 
@@ -67,5 +94,59 @@ export function nest(nesting: Nesting, notNestedParts: DesignDocumentPart[], ras
     const degreesPerStep = 90;
     const numSteps = 360 / degreesPerStep;
 
-    // TODO
+    const rotations = [...Array(numSteps).keys()].map((i) => degreesPerStep * i);
+
+    const sheetBounds: [Point, Point] = [
+        [gap, gap],
+        [sheetWidth, sheetHeight],
+    ];
+
+    rotations.forEach((rotation) => {
+        notNestedDesignDocumentParts.forEach((notNestedDesignDocumentPart) => {
+            if (newlyNestedDesignDocumentParts.some((x) => x == notNestedDesignDocumentPart)) {
+                return;
+            }
+
+            const nestOneResult = nestOne(
+                notNestedDesignDocumentPart,
+                rotation,
+                sheetBounds,
+                nestedPartsBounds,
+                allNestedParts,
+                embeddedPartsDictionary,
+                raster,
+            );
+
+            if (nestOneResult.nested) {
+                const newlyNestedPart = nestOneResult.nestedPart;
+
+                if (!newlyNestedPart) {
+                    throw new Error();
+                }
+
+                if (nestOneResult.embeddingPart != null) {
+                    if (!(nestOneResult.embeddingPart.outsideLoop.nestingId in embeddedPartsDictionary)) {
+                        embeddedPartsDictionary[nestOneResult.embeddingPart.outsideLoop.nestingId] = [];
+                    }
+                    embeddedPartsDictionary[nestOneResult.embeddingPart.outsideLoop.nestingId] = [
+                        ...embeddedPartsDictionary[nestOneResult.embeddingPart.outsideLoop.nestingId],
+                        newlyNestedPart.outsideLoop.nestingId,
+                    ];
+                }
+
+                nestedPartsBounds = polygonBounds([...nestedPartsBounds, ...partNestingBounds(newlyNestedPart)]) ?? [
+                    [0.0, 0.0],
+                    [0.0, 0.0],
+                ];
+
+                allNestedParts = [...allNestedParts, newlyNestedPart];
+                newlyNestedDesignDocumentParts = [...newlyNestedDesignDocumentParts, notNestedDesignDocumentPart];
+            }
+        });
+    });
+
+    return {
+        newlyNestedDesignDocumentParts: newlyNestedDesignDocumentParts,
+        allNestedParts: allNestedParts.filter((x) => !alreadyCutBoundaryParts.some((y) => y != x)),
+    };
 }
