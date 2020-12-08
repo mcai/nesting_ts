@@ -36,11 +36,11 @@ export function entityWithNestingMetaData(
     };
 }
 
-export function entityTranslate(entity: Entity, vector: [number, number]) {
+export function entityTranslate(entity: Entity, vector: [number, number]): Entity {
     return {
         ...entity,
         extentsPoints: entity.extentsPoints.map((x) => [x[0] + vector[0], x[1] + vector[1]]),
-        bounds: entity.bounds.map((x) => [x[0] + vector[0], x[1] + vector[1]]),
+        bounds: entity.bounds.map((x) => [x[0] + vector[0], x[1] + vector[1]]) as [Point, Point],
     };
 }
 
@@ -71,4 +71,33 @@ export function partNestingBounds(part: Part): [Point, Point] {
     return boundsOffset(part.outsideLoop.bounds, partToPartGap / 2);
 }
 
-// TODO: part operations
+export function partWithNestingMetaData(
+    part: Part,
+    nestingId: string,
+    nestingKey: string,
+    nestingRotationInDegrees: string,
+): Part {
+    return {
+        ...part,
+        outsideLoop: entityWithNestingMetaData(part.outsideLoop, nestingId, nestingKey, nestingRotationInDegrees),
+    };
+}
+
+export function partTranslate(part: Part, vector: [number, number]): Part {
+    return {
+        outsideLoop: entityTranslate(part.outsideLoop, vector),
+        insideLoops: part.insideLoops.map((insideLoop) => entityTranslate(insideLoop, vector)),
+    };
+}
+
+export function partMoveTo(part: Part, point: Point) {
+    const nestingBoundMinimumPoint = partNestingBounds(part)[0];
+    return partTranslate(part, [point[0] - nestingBoundMinimumPoint[0], point[1] - nestingBoundMinimumPoint[1]]);
+}
+
+export function partRotate(part: Part, angle: number) {
+    return {
+        outsideLoop: entityRotate(part.outsideLoop, angle),
+        insideLoops: part.insideLoops.map((insideLoop) => entityRotate(insideLoop, angle)),
+    };
+}
