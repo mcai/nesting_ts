@@ -1,7 +1,19 @@
-import { Part, partNestingBounds } from "./primitives";
-import { Point, polygonBounds } from "geometric";
+import {
+    boundsExtentsPoints,
+    boundsFromMinimumPointAndSize,
+    boundsSize,
+    Part,
+    partMoveTo,
+    partNestingBounds,
+    partRotate,
+    vectorSubtract,
+} from "./primitives";
+import { Point, polygonArea, polygonBounds } from "geometric";
 import RBush from "rbush";
 import { partToSheetGap } from "./utils";
+import { rasterize } from "./nfp";
+
+export const origin: Point = [0.0, 0.0];
 
 export interface Nesting {
     id: number;
@@ -16,8 +28,8 @@ export interface DesignDocumentPart {
     part: Part;
 }
 
-function getEmbeddedPartsDictionary(parts: Part[]): { [outsideLoopNestingId: string]: string[] } {
-    const result: { [outsideLoopNestingId: string]: string[] } = {};
+function getEmbeddedPartsDictionary(parts: Part[]): { [outsideLoopNestingId: string]: Part[] } {
+    const result: { [outsideLoopNestingId: string]: Part[] } = {};
 
     const tree = new RBush();
 
@@ -30,7 +42,7 @@ function getEmbeddedPartsDictionary(parts: Part[]): { [outsideLoopNestingId: str
                 minY: nestingBounds[0][1],
                 maxX: nestingBounds[1][0],
                 maxY: nestingBounds[1][1],
-                outsideLoopNestingId: part.outsideLoop.nestingId,
+                part: part,
             };
         }),
     );
@@ -43,10 +55,65 @@ function getEmbeddedPartsDictionary(parts: Part[]): { [outsideLoopNestingId: str
             minY: nestingBounds[0][1],
             maxX: nestingBounds[1][0],
             maxY: nestingBounds[1][1],
-        }) as any[]).map((x) => x.outsideLoopNestingId);
+        }) as any[]).map((x) => x.part);
     });
 
     return result;
+}
+
+function nestByBoundingBoxes(
+    notNestedPart: Part,
+    rotation: number,
+    nestedParts: Part[],
+    nestedPartsBounds: [Point, Point],
+    sheetBounds: [Point, Point],
+
+    embeddedPartsDictionary: { [outsideLoopNestingId: string]: Part[] },
+
+    raster: boolean,
+): {
+    bestRotation?: number;
+    bestLocation?: Point;
+    bestEmbeddingPart?: Part;
+} {
+    const bestRotation: number | undefined = undefined;
+    const bestLocation: Point | undefined = undefined;
+    const bestEmbeddingPart: Part | undefined = undefined;
+
+    notNestedPart = partMoveTo(partRotate(notNestedPart, rotation), origin);
+
+    const sheetInnerFitBoundsSize: [number, number] = vectorSubtract(
+        vectorSubtract(boundsSize(sheetBounds), boundsSize(partNestingBounds(notNestedPart))),
+        [partToSheetGap, partToSheetGap],
+    );
+
+    const sheetInnerFitBounds: [Point, Point] = boundsFromMinimumPointAndSize(sheetBounds[0], sheetInnerFitBoundsSize);
+
+    let sheetInnerFitPolygon = boundsExtentsPoints(sheetBounds);
+
+    if (polygonArea(sheetInnerFitPolygon, true) > 0) {
+        sheetInnerFitPolygon = sheetInnerFitPolygon.reverse();
+    }
+
+    const sheetInnerFitDots = rasterize(sheetInnerFitBounds);
+
+    let safeAreas: {
+        embeddingPart?: Part;
+        locations: Point[];
+    }[];
+
+    // TODO
+    if (nestedParts) {
+        safeAreas = [];
+
+        safeAreas = [
+            ...safeAreas,
+            nestedParts.map((nestedPart) => {
+                // const embeddedPartNoFitPolygons = (nestedPart.outsideLoop.nestingId in embeddedPartsDictionary) ? embeddedPartsDictionary[nestedPart.outsideLoop.nestingId];
+            }),
+        ];
+    } else {
+    }
 }
 
 function nestOne(
@@ -55,19 +122,41 @@ function nestOne(
     sheetBounds: [Point, Point],
     nestedPartsBounds: [Point, Point],
     allNestedParts: Part[],
-    embeddedPartsDictionary: { [outsideLoopNestingId: string]: string[] },
+    embeddedPartsDictionary: { [outsideLoopNestingId: string]: Part[] },
     raster: boolean,
 ): {
     nested: boolean;
     nestedPart?: Part;
     embeddingPart?: Part;
 } {
-    // TODO
+    let notNestedPart = partMoveTo(notNestedDesignDocumentPart.part, origin);
+
+    const { bestRotation, bestLocation, bestEmbeddingPart } = nestByBoundingBoxes(
+        notNestedPart,
+        rotation,
+        allNestedParts,
+        nestedPartsBounds,
+        sheetBounds,
+
+        embeddedPartsDictionary,
+
+        raster,
+    );
+
+    if (!bestLocation) {
+        return {
+            nested: false,
+            nestedPart: undefined,
+            embeddingPart: undefined,
+        };
+    }
+
+    notNestedPart = partMoveTo(partRotate(notNestedPart, bestRotation), bestLocation);
 
     return {
-        nested: false,
-        nestedPart: undefined,
-        embeddingPart: undefined,
+        nested: true,
+        nestedPart: notNestedPart,
+        embeddingPart: bestEmbeddingPart,
     };
 }
 
@@ -130,7 +219,7 @@ export function nest(nesting: Nesting, notNestedDesignDocumentParts: DesignDocum
                     }
                     embeddedPartsDictionary[nestOneResult.embeddingPart.outsideLoop.nestingId] = [
                         ...embeddedPartsDictionary[nestOneResult.embeddingPart.outsideLoop.nestingId],
-                        newlyNestedPart.outsideLoop.nestingId,
+                        newlyNestedPart,
                     ];
                 }
 
