@@ -1,6 +1,7 @@
 import { Point, pointInPolygon, Polygon, polygonBounds } from "geometric";
 import { GPU } from "gpu.js";
-import Shape from "@doodle3d/clipper-js";
+import { angleNormalize, Part, partMoveTo, partNestingBounds, partRotate, pointDistanceTo } from "./primitives";
+import { origin } from "./nesting";
 
 const gpu = new GPU({
     mode: "gpu",
@@ -20,17 +21,13 @@ export function rasterize(bounds: [Point, Point]): Point[] {
     return dots;
 }
 
-export function noFitRaster(
-    boardDots: [number, number][],
-    stationaryDots: [number, number][],
-    orbitingDots: [number, number][],
-): [number, number][] {
+export function noFitRaster(boardDots: Point[], stationaryDots: Point[], orbitingDots: Point[]): Point[] {
     const kernelFunc = gpu
         .createKernel(function (
-            boardDots: [number, number][],
-            stationaryDots: [number, number][],
-            orbitingDots: [number, number][],
-            orbitingDotsMinimumPoint: [number, number],
+            boardDots: Point[],
+            stationaryDots: Point[],
+            orbitingDots: Point[],
+            orbitingDotsMinimumPoint: Point,
         ) {
             for (let k = 0; k < this.constants.numOrbitingDots; k++) {
                 const x1 = orbitingDots[k][0] + boardDots[this.thread.y][0];
@@ -63,9 +60,9 @@ export function noFitRaster(
     return boardDots.filter((value, index) => out[index].some((x: number) => x == 1));
 }
 
-export function rasterDifference(a: [number, number][], b: [number, number][]): [number, number][] {
+export function rasterDifference(a: Point[], b: Point[]): Point[] {
     const kernelFunc = gpu
-        .createKernel(function (a: [number, number][], b: [number, number][]) {
+        .createKernel(function (a: Point[], b: Point[]) {
             for (let k = 0; k < this.constants.numB; k++) {
                 const x1 = b[k][0];
                 const x2 = a[this.thread.x][0];
@@ -89,7 +86,7 @@ export function rasterDifference(a: [number, number][], b: [number, number][]): 
     return a.filter((value, index) => out[index] == 1);
 }
 
-export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon): [number, number][] {
+export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon): Polygon {
     const stationaryBounds = polygonBounds(stationaryPolygon);
     const orbitingBounds = polygonBounds(orbitingPolygon);
 
@@ -120,28 +117,61 @@ export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygo
     return noFitRaster(boardDots, stationaryDots, orbitingDots);
 }
 
-export function testClipper() {
-    const subjectPaths = [
-        [
-            { X: 30, Y: 30 },
-            { X: 10, Y: 30 },
-            { X: 10, Y: 10 },
-            { X: 30, Y: 10 },
-        ],
-    ];
-    const clipPaths = [
-        [
-            { X: 20, Y: 20 },
-            { X: 0, Y: 20 },
-            { X: 0, Y: 0 },
-            { X: 20, Y: 0 },
-        ],
-    ];
+export function noFitPolygons(
+    stationaryPartOutsideLoopExtentsPoints: Point[],
+    orbitingPartOutsideLoopExtentsPoints: Point[],
+    raster: boolean,
+): Polygon[] {
+    if (!raster) {
+        throw new Error("not supported");
+    }
 
-    const subject = new Shape(subjectPaths, true);
-    const clip = new Shape(clipPaths, true);
+    // TODO
+}
 
-    const result = subject.intersect(clip);
+export function innerFitPolygons(
+    stationaryPartInsideLoopExtentsPoints: Point[],
+    orbitingPartOutsideLoopExtentsPoints: Point[],
+    raseter: boolean,
+): Polygon[] {
+    // TODO
+}
 
-    console.log(JSON.stringify(result));
+export function _noFitPolygonsAndInnerFitPolygons(
+    stationaryPart: Part,
+    orbitingPart: Part,
+    raster: boolean,
+): { noFitPolygons: Polygon[]; innerFitPolygons: Polygon[] } {
+    if (pointDistanceTo(partNestingBounds(stationaryPart)[0], origin) > 0.1) {
+        throw new Error();
+    }
+
+    if (pointDistanceTo(partNestingBounds(orbitingPart)[0], origin) > 0.1) {
+        throw new Error();
+    }
+
+    const noFitPolygons: Polygon[] = [];
+    const innerFitPolygons: Polygon[] = [];
+
+    // TODO
+
+    // return {
+    //     noFitPolygons: noFitPolygons,
+    //     innerFitPolygons: innerFitPolygons,
+    // };
+}
+
+export function noFitPolygonsAndInnerFitPolygons(
+    nestedPart: Part,
+    notNestedPart: Part,
+    nestingRotationInDegrees: number,
+    raster: boolean,
+): { noFitPolygons: Polygon[]; innerFitPolygons: Polygon[] } {
+    const rotation = angleNormalize(nestingRotationInDegrees);
+
+    return _noFitPolygonsAndInnerFitPolygons(
+        partMoveTo(nestedPart, origin),
+        partMoveTo(partRotate(partMoveTo(notNestedPart, origin), rotation), origin),
+        raster,
+    );
 }

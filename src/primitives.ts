@@ -1,5 +1,10 @@
-import { Point, pointRotate } from "geometric";
-import { partToPartGap } from "./utils";
+import { Point, pointRotate, Polygon, polygonArea } from "geometric";
+import { clipperScale, partToPartGap, tolerance } from "./utils";
+import Shape from "@doodle3d/clipper-js";
+
+export function pointDistanceTo(a: Point, b: Point): number {
+    return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
+}
 
 export function vectorAdd(a: [number, number], b: [number, number]): [number, number] {
     return [a[0] + b[0], a[1] + b[1]];
@@ -12,6 +17,50 @@ export function vectorSubtract(a: [number, number], b: [number, number]): [numbe
 export function angleNormalize(angle: number): number {
     const normalized = angle % 360.0;
     return normalized < 0.0 ? 360.0 + normalized : normalized;
+}
+
+export function polygonsToShape(polygons: Polygon[]): Shape {
+    return new Shape(
+        polygons.map((polygon) => polygon.map((p) => ({ X: p[0], Y: p[1] }))),
+        true,
+    );
+}
+
+export function shapeToPolygons(shape: Shape): Polygon[] {
+    return shape.paths.map((polygon) => polygon.map((p) => [p.X, p.Y]));
+}
+
+export function polygonOffset(points: Polygon, delta: number): Polygon[] {
+    if (!points) {
+        return [];
+    }
+
+    return shapeToPolygons(
+        polygonsToShape([points]).offset(delta, {
+            jointType: "jtRound",
+            endType: "etClosedPolygon",
+            miterLimit: 2.0,
+            roundPrecision: tolerance * clipperScale,
+        }),
+    );
+}
+
+export function polygonSimplify(points: Polygon): Polygon {
+    if (!points) {
+        return [];
+    }
+
+    const simplifiedPolygons = shapeToPolygons(polygonsToShape([points]).simplify("pftNonZero"));
+
+    if (!simplifiedPolygons) {
+        return [];
+    }
+
+    return simplifiedPolygons.sort((x) => polygonArea(x, false)).reverse()[0];
+}
+
+export function polygonClean(points: Polygon, tolerance: number): Polygon {
+    return shapeToPolygons(polygonsToShape([points]).clean(tolerance * clipperScale))[0];
 }
 
 export interface Entity {
