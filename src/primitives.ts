@@ -1,17 +1,51 @@
-import { Point, pointRotate, Polygon, polygonArea } from "geometric";
+import { Line, lineLength, Point, pointRotate, Polygon, polygonArea } from "geometric";
 import { clipperScale, partToPartGap, tolerance } from "./utils";
 import Shape from "@doodle3d/clipper-js";
+import { origin } from "./nesting";
+
+export type Vector = [number, number];
 
 export function pointDistanceTo(a: Point, b: Point): number {
     return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
 }
 
-export function vectorAdd(a: [number, number], b: [number, number]): [number, number] {
+export function pointVectorTo(a: Point, b: Point): Vector {
+    return [b[0] - a[0], b[1] - a[1]];
+}
+
+export function vectorAdd(a: Vector, b: Vector): Vector {
     return [a[0] + b[0], a[1] + b[1]];
 }
 
-export function vectorSubtract(a: [number, number], b: [number, number]): [number, number] {
+export function vectorSubtract(a: Vector, b: Vector): Vector {
     return [a[0] - b[0], a[1] - b[1]];
+}
+
+export function vectorDotProduct(a: Vector, b: Vector): number {
+    return a[0] * b[0] + a[1] * b[1];
+}
+
+export function vectorLength(vector: Vector): number {
+    return Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
+}
+
+export function vectorNormalize(vector: Vector) {
+    const length = vectorLength(vector);
+    return [vector[0] / length, vector[1] / length];
+}
+
+export function lineDirection(line: Line): Vector {
+    return pointVectorTo(line[0], line[1]);
+}
+
+export function lineClosestPointTo(line: Line, p: Point): Point {
+    let num = vectorDotProduct(pointVectorTo(line[0], p), lineDirection(line));
+    if (num < 0.0) num = 0.0;
+    const length = lineLength(line);
+    if (num > length) {
+        num = length;
+    }
+    return vectorAdd(line[0], [num * lineDirection(line)[0], num * lineDirection(line)[1]]);
 }
 
 export function angleNormalize(angle: number): number {
@@ -61,6 +95,22 @@ export function polygonSimplify(points: Polygon): Polygon {
 
 export function polygonClean(points: Polygon, tolerance: number): Polygon {
     return shapeToPolygons(polygonsToShape([points]).clean(tolerance * clipperScale))[0];
+}
+
+export function polygonClosestPointTo(polygon: Polygon, p: Point): Point {
+    let num1 = Number.MAX_SAFE_INTEGER;
+    let point = origin;
+
+    for (let index = 0; index < polygon.length - 1; ++index) {
+        const otherPoint = lineClosestPointTo([polygon[index], polygon[index + 1]], p);
+        const num2 = pointDistanceTo(p, otherPoint);
+        if (num2 < num1) {
+            num1 = num2;
+            point = otherPoint;
+        }
+    }
+
+    return point;
 }
 
 export interface Entity {

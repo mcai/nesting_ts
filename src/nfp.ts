@@ -1,7 +1,18 @@
-import { Point, pointInPolygon, Polygon, polygonBounds } from "geometric";
+import { Point, pointInPolygon, Polygon, polygonArea, polygonBounds } from "geometric";
 import { GPU } from "gpu.js";
-import { angleNormalize, Part, partMoveTo, partNestingBounds, partRotate, pointDistanceTo } from "./primitives";
+import {
+    angleNormalize,
+    Part,
+    partMoveTo,
+    partNestingBounds,
+    partRotate,
+    pointDistanceTo,
+    polygonClean,
+    polygonOffset,
+    polygonSimplify,
+} from "./primitives";
 import { origin } from "./nesting";
+import { noFitPolygonTolerance, partToPartGap, tolerance } from "./utils";
 
 const gpu = new GPU({
     mode: "gpu",
@@ -126,7 +137,13 @@ export function noFitPolygons(
         throw new Error("not supported");
     }
 
-    // TODO
+    const stationaryPolygons = polygonOffset(stationaryPartOutsideLoopExtentsPoints, partToPartGap).map((x) =>
+        polygonClean(polygonSimplify(x), noFitPolygonTolerance),
+    );
+
+    const orbitingPolygon = polygonSimplify(orbitingPartOutsideLoopExtentsPoints);
+
+    return stationaryPolygons.map((x) => noFitPolygon(x, orbitingPolygon));
 }
 
 export function innerFitPolygons(
@@ -134,7 +151,35 @@ export function innerFitPolygons(
     orbitingPartOutsideLoopExtentsPoints: Point[],
     raseter: boolean,
 ): Polygon[] {
+    stationaryPartInsideLoopExtentsPoints = polygonSimplify(stationaryPartInsideLoopExtentsPoints);
+
+    const orbitingPolygons = polygonOffset(orbitingPartOutsideLoopExtentsPoints, partToPartGap).map((x) =>
+        polygonClean(polygonSimplify(x), noFitPolygonTolerance),
+    );
+
+    if (!stationaryPartInsideLoopExtentsPoints || !orbitingPolygons) {
+        return [];
+    }
+
+    if (polygonArea(stationaryPartInsideLoopExtentsPoints, true) < 0) {
+        stationaryPartInsideLoopExtentsPoints = stationaryPartInsideLoopExtentsPoints.reverse();
+    }
+
+    for (let i = 0; i < orbitingPolygons.length; i++) {
+        const orbitingPolygon = orbitingPolygons[i];
+        if (polygonArea(orbitingPolygon, true) < 0) {
+            orbitingPolygons[i] = orbitingPolygon.reverse();
+        }
+    }
+
+    const outside = polygonOffset(stationaryPartInsideLoopExtentsPoints, tolerance)[0];
+    const inside = stationaryPartInsideLoopExtentsPoints.reverse();
+
+    const outsideLastPoint = outside[outside.length - 1];
+
     // TODO
+
+    // const insideFirstPoint = closest;
 }
 
 export function _noFitPolygonsAndInnerFitPolygons(

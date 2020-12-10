@@ -151,7 +151,7 @@ function nestOne(
         };
     }
 
-    notNestedPart = partMoveTo(partRotate(notNestedPart, bestRotation), bestLocation);
+    notNestedPart = partMoveTo(partRotate(notNestedPart, bestRotation ?? 0.0), bestLocation);
 
     return {
         nested: true,
