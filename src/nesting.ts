@@ -1,4 +1,5 @@
 import {
+    angleNormalize,
     boundsExtentsPoints,
     boundsFromMinimumPointAndSize,
     boundsSize,
@@ -6,12 +7,13 @@ import {
     partMoveTo,
     partNestingBounds,
     partRotate,
+    polygonTranslateByVector,
     vectorSubtract,
 } from "./primitives";
-import { Point, polygonArea, polygonBounds } from "geometric";
+import { Point, Polygon, polygonArea, polygonBounds } from "geometric";
 import RBush from "rbush";
 import { partToSheetGap } from "./utils";
-import { rasterize } from "./nfp";
+import { noFitPolygonsAndInnerFitPolygons, rasterDifference, rasterize } from "./nfp";
 
 export const origin: Point = [0.0, 0.0];
 
@@ -102,18 +104,92 @@ function nestByBoundingBoxes(
         locations: Point[];
     }[];
 
-    // TODO
     if (nestedParts) {
-        safeAreas = [];
+        safeAreas = nestedParts.flatMap((nestedPart) => {
+            let embeddedPartNoFitPolygons: Polygon[] = [];
+
+            if (nestedPart.outsideLoop.nestingId in embeddedPartsDictionary) {
+                embeddedPartNoFitPolygons = embeddedPartsDictionary[
+                    nestedPart.outsideLoop.nestingId
+                ].flatMap((embeddedPart) =>
+                    noFitPolygonsAndInnerFitPolygons(
+                        embeddedPart,
+                        notNestedPart,
+                        angleNormalize(Number(notNestedPart.outsideLoop.nestingRotationInDegrees)),
+                        raster,
+                    ).noFitPolygons.map((noFitPolygon) =>
+                        polygonTranslateByVector(
+                            noFitPolygon,
+                            vectorSubtract(partNestingBounds(embeddedPart)[0], origin),
+                        ),
+                    ),
+                );
+            }
+
+            return [
+                rasterDifference(
+                    noFitPolygonsAndInnerFitPolygons(
+                        nestedPart,
+                        notNestedPart,
+                        angleNormalize(Number(notNestedPart.outsideLoop.nestingRotationInDegrees)),
+                        raster,
+                    )
+                        .innerFitPolygons.map((innerFitPolygon) =>
+                            polygonTranslateByVector(
+                                innerFitPolygon,
+                                vectorSubtract(partNestingBounds(nestedPart)[0], origin),
+                            ),
+                        )
+                        .flat(),
+                    embeddedPartNoFitPolygons.flat(),
+                ),
+            ].map((x) => ({
+                embeddingPart: nestedPart,
+                locations: x,
+            }));
+        });
+
+        const nestedPartNoFitPolygons = nestedParts.flatMap((nestedPart) =>
+            noFitPolygonsAndInnerFitPolygons(
+                nestedPart,
+                notNestedPart,
+                angleNormalize(Number(notNestedPart.outsideLoop.nestingRotationInDegrees)),
+                raster,
+            ).noFitPolygons.map((noFitPolygon) =>
+                polygonTranslateByVector(noFitPolygon, vectorSubtract(partNestingBounds(nestedPart)[0], origin)),
+            ),
+        );
 
         safeAreas = [
             ...safeAreas,
-            nestedParts.map((nestedPart) => {
-                // const embeddedPartNoFitPolygons = (nestedPart.outsideLoop.nestingId in embeddedPartsDictionary) ? embeddedPartsDictionary[nestedPart.outsideLoop.nestingId];
-            }),
+            ...[rasterDifference(sheetInnerFitDots, nestedPartNoFitPolygons.flat())].map((x) => ({
+                embeddingPart: undefined,
+                locations: x,
+            })),
         ];
     } else {
+        safeAreas = [
+            {
+                embeddingPart: undefined,
+                locations: sheetInnerFitDots,
+            },
+        ];
     }
+
+    if (!safeAreas) {
+        return {
+            bestRotation: undefined,
+            bestLocation: undefined,
+            bestEmbeddingPart: undefined,
+        };
+    }
+
+    const notNestedPartMinimumPoint = partNestingBounds(notNestedPart)[0];
+    const notNestedPartBounds = notNestedPart.outsideLoop.bounds;
+    const smallestBoundingBoxHeight = Number.MAX_SAFE_INTEGER;
+
+    // TODO
+    // safeAreas.sort((x) => polygonArea(x.locations, false)).forEach();
 }
 
 function nestOne(

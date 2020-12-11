@@ -53,6 +53,10 @@ export function angleNormalize(angle: number): number {
     return normalized < 0.0 ? 360.0 + normalized : normalized;
 }
 
+export function polygonTranslateByVector(polygon: Polygon, vector: Vector): Polygon {
+    return polygon.map((x) => [x[0] + vector[0], x[1] + vector[1]]);
+}
+
 export function polygonsToShape(polygons: Polygon[]): Shape {
     return new Shape(
         polygons.map((polygon) => polygon.map((p) => ({ X: p[0], Y: p[1] }))),
