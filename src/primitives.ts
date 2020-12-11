@@ -29,13 +29,13 @@ export function vectorLength(vector: Vector): number {
     return Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
 }
 
-export function vectorNormalize(vector: Vector) {
+export function vectorNormalize(vector: Vector): Vector {
     const length = vectorLength(vector);
     return [vector[0] / length, vector[1] / length];
 }
 
 export function lineDirection(line: Line): Vector {
-    return pointVectorTo(line[0], line[1]);
+    return vectorNormalize(pointVectorTo(line[0], line[1]));
 }
 
 export function lineClosestPointTo(line: Line, p: Point): Point {
