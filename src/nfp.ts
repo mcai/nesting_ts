@@ -8,8 +8,11 @@ import {
     partRotate,
     pointDistanceTo,
     polygonClean,
+    polygonClosestPointTo,
     polygonOffset,
     polygonSimplify,
+    vectorAdd,
+    vectorSubtract,
 } from "./primitives";
 import { origin } from "./nesting";
 import { noFitPolygonTolerance, partToPartGap, tolerance } from "./utils";
@@ -177,9 +180,24 @@ export function innerFitPolygons(
 
     const outsideLastPoint = outside[outside.length - 1];
 
-    // TODO
+    const insideFirstPoint = polygonClosestPointTo(inside, outsideLastPoint);
+    const indexOfInsideFirstPoint = inside.indexOf(insideFirstPoint);
+    const inside1 = [...inside.slice(indexOfInsideFirstPoint + 1), ...inside.slice(0, indexOfInsideFirstPoint)];
 
-    // const insideFirstPoint = closest;
+    const stationaryPolygon = [...outside, ...inside1];
+
+    const orbitingPartOutsideLoopBoundingBox = polygonBounds(orbitingPartOutsideLoopExtentsPoints) ?? [origin, origin];
+
+    function isWithinBounds(nfp: Polygon): boolean {
+        return orbitingPartOutsideLoopExtentsPoints.every((x) =>
+            pointInPolygon(
+                vectorAdd(x, vectorSubtract(nfp[0], orbitingPartOutsideLoopBoundingBox[0])),
+                stationaryPartInsideLoopExtentsPoints,
+            ),
+        );
+    }
+
+    return orbitingPolygons.map((x) => noFitPolygon(stationaryPolygon, x)).filter((x) => isWithinBounds(x));
 }
 
 export function _noFitPolygonsAndInnerFitPolygons(
