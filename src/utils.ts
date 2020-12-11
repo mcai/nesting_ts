@@ -26,3 +26,5 @@ export const tolerance = 0.05;
 export const noFitPolygonTolerance = 0.25;
 
 export const clipperScale = 100.0;
+
+export const sinkHoleCutterDiameter = 22.0;

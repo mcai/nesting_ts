@@ -120,6 +120,8 @@ export interface Entity {
     nestingRotationInDegrees?: string;
     extentsPoints: Point[];
     bounds: [Point, Point];
+    isCircle: boolean;
+    circleDiameter?: number;
 }
 
 export function entityWithLayer(entity: Entity, layer: string): Entity {

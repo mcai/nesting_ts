@@ -2,6 +2,7 @@ import { Point, pointInPolygon, Polygon, polygonArea, polygonBounds } from "geom
 import { GPU } from "gpu.js";
 import {
     angleNormalize,
+    Entity,
     Part,
     partMoveTo,
     partNestingBounds,
@@ -15,7 +16,7 @@ import {
     vectorSubtract,
 } from "./primitives";
 import { origin } from "./nesting";
-import { noFitPolygonTolerance, partToPartGap, tolerance } from "./utils";
+import { noFitPolygonTolerance, partToPartGap, sinkHoleCutterDiameter, tolerance } from "./utils";
 
 const gpu = new GPU({
     mode: "gpu",
@@ -152,8 +153,12 @@ export function noFitPolygons(
 export function innerFitPolygons(
     stationaryPartInsideLoopExtentsPoints: Point[],
     orbitingPartOutsideLoopExtentsPoints: Point[],
-    raseter: boolean,
+    raster: boolean,
 ): Polygon[] {
+    if (!raster) {
+        throw new Error("not supported");
+    }
+
     stationaryPartInsideLoopExtentsPoints = polygonSimplify(stationaryPartInsideLoopExtentsPoints);
 
     const orbitingPolygons = polygonOffset(orbitingPartOutsideLoopExtentsPoints, partToPartGap).map((x) =>
@@ -200,6 +205,29 @@ export function innerFitPolygons(
     return orbitingPolygons.map((x) => noFitPolygon(stationaryPolygon, x)).filter((x) => isWithinBounds(x));
 }
 
+export function _innerFitPolygons(stationaryPartInsideLoop: Entity, orbitingPartOutsideLoop: Entity, raster: boolean) {
+    const stationaryPartInsideLoopIsCircle = stationaryPartInsideLoop.isCircle;
+    const orbitingPartOutsideLoopIsCircle = orbitingPartOutsideLoop.isCircle;
+
+    if (stationaryPartInsideLoopIsCircle && orbitingPartOutsideLoopIsCircle) {
+        const newCircleIsLessThanOrEqualToCutterDiameter =
+            (orbitingPartOutsideLoop.circleDiameter ?? 0.0) <= sinkHoleCutterDiameter + tolerance;
+
+        if (newCircleIsLessThanOrEqualToCutterDiameter) {
+            return [];
+        }
+    }
+
+    if (
+        polygonArea(stationaryPartInsideLoop.extentsPoints, false) <
+        polygonArea(orbitingPartOutsideLoop.extentsPoints, false)
+    ) {
+        return [];
+    }
+
+    return innerFitPolygons(stationaryPartInsideLoop.extentsPoints, orbitingPartOutsideLoop.extentsPoints, raster);
+}
+
 export function _noFitPolygonsAndInnerFitPolygons(
     stationaryPart: Part,
     orbitingPart: Part,
@@ -213,15 +241,25 @@ export function _noFitPolygonsAndInnerFitPolygons(
         throw new Error();
     }
 
-    const noFitPolygons: Polygon[] = [];
-    const innerFitPolygons: Polygon[] = [];
+    const noFitPolygons1 = noFitPolygons(
+        stationaryPart.outsideLoop.extentsPoints,
+        orbitingPart.outsideLoop.extentsPoints,
+        raster,
+    );
 
-    // TODO
+    let innerFitPolygons1: Polygon[] = [];
 
-    // return {
-    //     noFitPolygons: noFitPolygons,
-    //     innerFitPolygons: innerFitPolygons,
-    // };
+    stationaryPart.insideLoops.forEach((stationaryPartInsideLoop) => {
+        innerFitPolygons1 = [
+            ...innerFitPolygons1,
+            ..._innerFitPolygons(stationaryPartInsideLoop, orbitingPart.outsideLoop, true),
+        ];
+    });
+
+    return {
+        noFitPolygons: noFitPolygons1,
+        innerFitPolygons: innerFitPolygons1,
+    };
 }
 
 export function noFitPolygonsAndInnerFitPolygons(
