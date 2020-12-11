@@ -138,6 +138,7 @@ export function noFitPolygons(
     raster: boolean,
 ): Polygon[] {
     if (!raster) {
+        // TODO
         throw new Error("not supported");
     }
 
@@ -156,6 +157,7 @@ export function innerFitPolygons(
     raster: boolean,
 ): Polygon[] {
     if (!raster) {
+        // TODO
         throw new Error("not supported");
     }
 

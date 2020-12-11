@@ -78,9 +78,9 @@ function nestByBoundingBoxes(
     bestLocation?: Point;
     bestEmbeddingPart?: Part;
 } {
-    const bestRotation: number | undefined = undefined;
-    const bestLocation: Point | undefined = undefined;
-    const bestEmbeddingPart: Part | undefined = undefined;
+    let bestRotation: number | undefined = undefined;
+    let bestLocation: Point | undefined = undefined;
+    let bestEmbeddingPart: Part | undefined = undefined;
 
     notNestedPart = partMoveTo(partRotate(notNestedPart, rotation), origin);
 
@@ -186,10 +186,38 @@ function nestByBoundingBoxes(
 
     const notNestedPartMinimumPoint = partNestingBounds(notNestedPart)[0];
     const notNestedPartBounds = notNestedPart.outsideLoop.bounds;
-    const smallestBoundingBoxHeight = Number.MAX_SAFE_INTEGER;
+    let smallestBoundsHeight = Number.MAX_SAFE_INTEGER;
 
-    // TODO
-    // safeAreas.sort((x) => polygonArea(x.locations, false)).forEach();
+    safeAreas
+        .sort((x) => polygonArea(x.locations, false))
+        .forEach((safeArea) => {
+            safeArea.locations
+                .sort((x) => x[0])
+                .forEach((location: Point) => {
+                    const newBoundsHeight = boundsSize(
+                        polygonBounds([
+                            ...nestedPartsBounds,
+                            ...polygonTranslateByVector(
+                                notNestedPartBounds,
+                                vectorSubtract(location, notNestedPartMinimumPoint),
+                            ),
+                        ]) ?? [origin, origin],
+                    )[1];
+
+                    if (newBoundsHeight < smallestBoundsHeight) {
+                        bestRotation = rotation;
+                        bestLocation = location;
+                        bestEmbeddingPart = safeArea.embeddingPart;
+                        smallestBoundsHeight = newBoundsHeight;
+                    }
+                });
+        });
+
+    return {
+        bestRotation: bestRotation,
+        bestLocation: bestLocation,
+        bestEmbeddingPart: bestEmbeddingPart,
+    };
 }
 
 function nestOne(
