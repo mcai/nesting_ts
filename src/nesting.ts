@@ -13,7 +13,7 @@ import {
 import { Point, Polygon, polygonArea, polygonBounds } from "geometric";
 import RBush from "rbush";
 import { partToSheetGap } from "./utils";
-import { noFitPolygonsAndInnerFitPolygons, rasterDifference, rasterize } from "./nfp";
+import { adaptiveDifference, noFitPolygonsAndInnerFitPolygons, rasterDifference, rasterize } from "./nfp";
 
 export const origin: Point = [0.0, 0.0];
 
@@ -126,24 +126,18 @@ function nestByBoundingBoxes(
                 );
             }
 
-            return [
-                rasterDifference(
-                    noFitPolygonsAndInnerFitPolygons(
-                        nestedPart,
-                        notNestedPart,
-                        angleNormalize(Number(notNestedPart.outsideLoop.nestingRotationInDegrees)),
-                        raster,
-                    )
-                        .innerFitPolygons.map((innerFitPolygon) =>
-                            polygonTranslateByVector(
-                                innerFitPolygon,
-                                vectorSubtract(partNestingBounds(nestedPart)[0], origin),
-                            ),
-                        )
-                        .flat(),
-                    embeddedPartNoFitPolygons.flat(),
+            return adaptiveDifference(
+                noFitPolygonsAndInnerFitPolygons(
+                    nestedPart,
+                    notNestedPart,
+                    angleNormalize(Number(notNestedPart.outsideLoop.nestingRotationInDegrees)),
+                    raster,
+                ).innerFitPolygons.map((innerFitPolygon) =>
+                    polygonTranslateByVector(innerFitPolygon, vectorSubtract(partNestingBounds(nestedPart)[0], origin)),
                 ),
-            ].map((x) => ({
+                embeddedPartNoFitPolygons,
+                raster,
+            ).map((x) => ({
                 embeddingPart: nestedPart,
                 locations: x,
             }));
@@ -162,7 +156,11 @@ function nestByBoundingBoxes(
 
         safeAreas = [
             ...safeAreas,
-            ...[rasterDifference(sheetInnerFitDots, nestedPartNoFitPolygons.flat())].map((x) => ({
+            ...adaptiveDifference(
+                [raster ? sheetInnerFitDots : sheetInnerFitPolygon],
+                nestedPartNoFitPolygons,
+                raster,
+            ).map((x) => ({
                 embeddingPart: undefined,
                 locations: x,
             })),
@@ -171,7 +169,7 @@ function nestByBoundingBoxes(
         safeAreas = [
             {
                 embeddingPart: undefined,
-                locations: sheetInnerFitDots,
+                locations: raster ? sheetInnerFitDots : sheetInnerFitPolygon,
             },
         ];
     }

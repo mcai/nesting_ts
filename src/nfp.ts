@@ -12,6 +12,8 @@ import {
     polygonClosestPointTo,
     polygonOffset,
     polygonSimplify,
+    polygonsToShape,
+    shapeToPolygons,
     vectorAdd,
     vectorSubtract,
 } from "./primitives";
@@ -100,6 +102,20 @@ export function rasterDifference(a: Point[], b: Point[]): Point[] {
     const out: any = kernelFunc(a, b);
 
     return a.filter((value, index) => out[index] == 1);
+}
+
+export function polygonDifference(a: Point[][], b: Point[][]): Point[][] {
+    const aShape = polygonsToShape(a);
+    const bShape = polygonsToShape(b);
+    return shapeToPolygons(aShape.difference(bShape));
+}
+
+export function adaptiveDifference(a: Point[][], b: Point[][], raster: boolean): Point[][] {
+    if (raster) {
+        return [rasterDifference(a.flat(), b.flat())];
+    }
+
+    return polygonDifference(a, b);
 }
 
 export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon, raster: boolean): Polygon[] {
