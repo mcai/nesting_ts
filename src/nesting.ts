@@ -13,7 +13,7 @@ import {
 import { Point, Polygon, polygonArea, polygonBounds } from "geometric";
 import RBush from "rbush";
 import { partToSheetGap } from "./utils";
-import { adaptiveDifference, noFitPolygonsAndInnerFitPolygons, rasterDifference, rasterize } from "./nfp";
+import { adaptiveDifference, noFitPolygonsAndInnerFitPolygons, rasterize } from "./nfp";
 
 export const origin: Point = [0.0, 0.0];
 
