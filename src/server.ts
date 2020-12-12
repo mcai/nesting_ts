@@ -28,6 +28,7 @@ export function listen(port: number) {
                 noFitPolygon(
                     stationaryPolygon.map((dot: any) => [dot.X, dot.Y]),
                     orbitingPolygon.map((dot: any) => [dot.X, dot.Y]),
+                    true,
                 ),
         );
 
