@@ -17,6 +17,7 @@ import {
 } from "./primitives";
 import { origin } from "./nesting";
 import { noFitPolygonTolerance, partToPartGap, sinkHoleCutterDiameter, tolerance } from "./utils";
+import * as ClipperLib from "clipper-lib";
 
 const gpu = new GPU({
     mode: "gpu",
@@ -101,7 +102,17 @@ export function rasterDifference(a: Point[], b: Point[]): Point[] {
     return a.filter((value, index) => out[index] == 1);
 }
 
-export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon): Polygon {
+export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon, raster: boolean): Polygon[] {
+    if (!raster) {
+        const minusB = orbitingPolygon.map((x) => [-x[0], -x[1]]);
+        const minkowskiSum = ClipperLib.Clipper.MinkowskiSum(
+            stationaryPolygon.map((x) => ({ X: x[0], Y: x[1] })),
+            [minusB.map((x) => ({ X: x[0], Y: x[1] }))],
+            true,
+        );
+        return minkowskiSum.map((clipperNfp) => polygonSimplify(clipperNfp.map((x) => [x.X, x.Y]))).filter((x) => x);
+    }
+
     const stationaryBounds = polygonBounds(stationaryPolygon);
     const orbitingBounds = polygonBounds(orbitingPolygon);
 
@@ -129,7 +140,7 @@ export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygo
     const stationaryDots = boardDots.filter((x) => pointInPolygon(x, stationaryPolygon));
     const orbitingDots = boardDots.filter((x) => pointInPolygon(x, orbitingPolygon));
 
-    return noFitRaster(boardDots, stationaryDots, orbitingDots);
+    return [noFitRaster(boardDots, stationaryDots, orbitingDots)];
 }
 
 export function noFitPolygons(
@@ -137,18 +148,13 @@ export function noFitPolygons(
     orbitingPartOutsideLoopExtentsPoints: Point[],
     raster: boolean,
 ): Polygon[] {
-    if (!raster) {
-        // TODO
-        throw new Error("not supported");
-    }
-
     const stationaryPolygons = polygonOffset(stationaryPartOutsideLoopExtentsPoints, partToPartGap).map((x) =>
         polygonClean(polygonSimplify(x), noFitPolygonTolerance),
     );
 
     const orbitingPolygon = polygonSimplify(orbitingPartOutsideLoopExtentsPoints);
 
-    return stationaryPolygons.map((x) => noFitPolygon(x, orbitingPolygon));
+    return stationaryPolygons.flatMap((x) => noFitPolygon(x, orbitingPolygon, raster));
 }
 
 export function innerFitPolygons(
@@ -156,11 +162,6 @@ export function innerFitPolygons(
     orbitingPartOutsideLoopExtentsPoints: Point[],
     raster: boolean,
 ): Polygon[] {
-    if (!raster) {
-        // TODO
-        throw new Error("not supported");
-    }
-
     stationaryPartInsideLoopExtentsPoints = polygonSimplify(stationaryPartInsideLoopExtentsPoints);
 
     const orbitingPolygons = polygonOffset(orbitingPartOutsideLoopExtentsPoints, partToPartGap).map((x) =>
@@ -204,7 +205,7 @@ export function innerFitPolygons(
         );
     }
 
-    return orbitingPolygons.map((x) => noFitPolygon(stationaryPolygon, x)).filter((x) => isWithinBounds(x));
+    return orbitingPolygons.flatMap((x) => noFitPolygon(stationaryPolygon, x, raster)).filter((x) => isWithinBounds(x));
 }
 
 export function _innerFitPolygons(stationaryPartInsideLoop: Entity, orbitingPartOutsideLoop: Entity, raster: boolean) {
