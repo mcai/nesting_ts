@@ -4,6 +4,7 @@ import { createServer } from "http";
 import moment from "moment";
 import { noFitPolygon, rasterDifference } from "./nfp";
 import { time, toFormattedDateTimeString } from "./utils";
+import { nest } from "./nesting";
 
 export function listen(port: number) {
     const app = express();
@@ -51,6 +52,20 @@ export function listen(port: number) {
         );
 
         return res.json(result.map((dot: any) => ({ X: dot[0], Y: dot[1] })));
+    });
+
+    app.post(`/rest/nest`, async (req, res) => {
+        const { nestingJson, notNestedDesignDocumentPartsJson, raster } = req.body;
+
+        const nesting = JSON.parse(nestingJson as any);
+        const notNestedDesignDocumentParts = JSON.parse(notNestedDesignDocumentPartsJson as any);
+
+        const result = time(
+            (result) => `nest`,
+            () => nest(nesting, notNestedDesignDocumentParts, raster),
+        );
+
+        return res.json(result);
     });
 
     const server = createServer(app);

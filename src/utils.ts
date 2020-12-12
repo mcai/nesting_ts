@@ -4,7 +4,7 @@ export function toFormattedDateTimeString(moment: Moment): string {
     return moment.format("YYYY-MM-DD HH:mm:ss");
 }
 
-export function time(name: (result: any) => string, func: () => any) {
+export function time<T>(name: (result: T) => string, func: () => T): T {
     const start = new Date().getTime();
 
     const result = func();

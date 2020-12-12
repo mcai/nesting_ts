@@ -262,7 +262,11 @@ function nestOne(
     };
 }
 
-export function nest(nesting: Nesting, notNestedDesignDocumentParts: DesignDocumentPart[], raster: boolean) {
+export function nest(
+    nesting: Nesting,
+    notNestedDesignDocumentParts: DesignDocumentPart[],
+    raster: boolean,
+): { allNestedParts: Part[]; newlyNestedDesignDocumentParts: DesignDocumentPart[] } {
     let newlyNestedDesignDocumentParts: DesignDocumentPart[] = [];
 
     const [sheetWidth, sheetHeight] = [nesting.sheetWidth, nesting.sheetHeight];
