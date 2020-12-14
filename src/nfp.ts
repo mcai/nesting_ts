@@ -13,6 +13,7 @@ import {
     polygonOffset,
     polygonSimplify,
     polygonsToShape,
+    restPointToPoint,
     shapeToPolygons,
     vectorAdd,
     vectorSubtract,
@@ -238,13 +239,23 @@ export function _innerFitPolygons(stationaryPartInsideLoop: Entity, orbitingPart
     }
 
     if (
-        polygonArea(stationaryPartInsideLoop.extentsPoints, false) <
-        polygonArea(orbitingPartOutsideLoop.extentsPoints, false)
+        polygonArea(
+            stationaryPartInsideLoop.extentsPoints.map((x) => restPointToPoint(x)),
+            false,
+        ) <
+        polygonArea(
+            orbitingPartOutsideLoop.extentsPoints.map((x) => restPointToPoint(x)),
+            false,
+        )
     ) {
         return [];
     }
 
-    return innerFitPolygons(stationaryPartInsideLoop.extentsPoints, orbitingPartOutsideLoop.extentsPoints, raster);
+    return innerFitPolygons(
+        stationaryPartInsideLoop.extentsPoints.map((x) => restPointToPoint(x)),
+        orbitingPartOutsideLoop.extentsPoints.map((x) => restPointToPoint(x)),
+        raster,
+    );
 }
 
 export function _noFitPolygonsAndInnerFitPolygons(
@@ -261,8 +272,8 @@ export function _noFitPolygonsAndInnerFitPolygons(
     }
 
     const noFitPolygons1 = noFitPolygons(
-        stationaryPart.outsideLoop.extentsPoints,
-        orbitingPart.outsideLoop.extentsPoints,
+        stationaryPart.outsideLoop.extentsPoints.map((x) => restPointToPoint(x)),
+        orbitingPart.outsideLoop.extentsPoints.map((x) => restPointToPoint(x)),
         raster,
     );
 

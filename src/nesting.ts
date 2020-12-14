@@ -8,6 +8,7 @@ import {
     partNestingBounds,
     partRotate,
     polygonTranslateByVector,
+    restPointToPoint,
     vectorSubtract,
 } from "./primitives";
 import { Point, Polygon, polygonArea, polygonBounds } from "geometric";
@@ -183,7 +184,7 @@ function nestByBoundingBoxes(
     }
 
     const notNestedPartMinimumPoint = partNestingBounds(notNestedPart)[0];
-    const notNestedPartBounds = notNestedPart.outsideLoop.bounds;
+    const notNestedPartBounds = notNestedPart.outsideLoop.bounds.map((x) => restPointToPoint(x));
     let smallestBoundsHeight = Number.MAX_SAFE_INTEGER;
 
     safeAreas

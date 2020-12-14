@@ -117,14 +117,30 @@ export function polygonClosestPointTo(polygon: Polygon, p: Point): Point {
     return point;
 }
 
+export interface RestPoint {
+    x: number;
+    y: number;
+}
+
+export function restPointToPoint(restPoint: RestPoint): Point {
+    return [restPoint.x, restPoint.y];
+}
+
+export function pointToRestPoint(point: Point): RestPoint {
+    return {
+        x: point[0],
+        y: point[1],
+    };
+}
+
 // TODO: points to be converted from [x: x, y: y] to [x, y]
 export interface Entity {
     layer: string;
     nestingId: string;
     nestingKey: string;
     nestingRotationInDegrees?: string;
-    extentsPoints: Point[];
-    bounds: [Point, Point];
+    extentsPoints: RestPoint[];
+    bounds: RestPoint[];
     isCircle: boolean;
     circleDiameter?: number;
 }
@@ -153,8 +169,8 @@ export function entityWithNestingMetaData(
 export function entityTranslate(entity: Entity, vector: [number, number]): Entity {
     return {
         ...entity,
-        extentsPoints: entity.extentsPoints.map((x) => [x[0] + vector[0], x[1] + vector[1]]),
-        bounds: entity.bounds.map((x) => [x[0] + vector[0], x[1] + vector[1]]) as [Point, Point],
+        extentsPoints: entity.extentsPoints.map((x) => ({ x: x.x + vector[0], y: x.y + vector[1] })),
+        bounds: entity.bounds.map((x) => ({ x: x.x + vector[0], y: x.y + vector[1] })),
     };
 }
 
@@ -164,8 +180,8 @@ export function entityRotate(entity: Entity, angle: number): Entity {
         nestingRotationInDegrees: entity.nestingRotationInDegrees
             ? `${angleNormalize(parseFloat(entity.nestingRotationInDegrees) + angle)}`
             : undefined,
-        extentsPoints: entity.extentsPoints.map((x) => pointRotate(x, angle)),
-        bounds: entity.bounds.map((x) => pointRotate(x, angle)) as [Point, Point],
+        extentsPoints: entity.extentsPoints.map((x) => pointToRestPoint(pointRotate(restPointToPoint(x), angle))),
+        bounds: entity.bounds.map((x) => pointToRestPoint(pointRotate(restPointToPoint(x), angle))),
     };
 }
 
@@ -195,7 +211,7 @@ export function boundsFromMinimumPointAndSize(minimumPoint: Point, size: [number
 }
 
 export function partNestingBounds(part: Part): [Point, Point] {
-    return boundsOffset(part.outsideLoop.bounds, partToPartGap / 2);
+    return boundsOffset(part.outsideLoop.bounds.map((x) => restPointToPoint(x)) as [Point, Point], partToPartGap / 2);
 }
 
 export function partWithNestingMetaData(
