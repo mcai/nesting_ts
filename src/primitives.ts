@@ -117,6 +117,7 @@ export function polygonClosestPointTo(polygon: Polygon, p: Point): Point {
     return point;
 }
 
+// TODO: points to be converted from [x: x, y: y] to [x, y]
 export interface Entity {
     layer: string;
     nestingId: string;
