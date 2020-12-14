@@ -72,6 +72,6 @@ export function listen(port: number) {
 
     server.listen(port, () => {
         const now = toFormattedDateTimeString(moment());
-        console.debug(`[${now} NoFitRasterGpuCalculatorHelperServer] listening: port=${port}`);
+        console.debug(`[${now} nesting] listening: port=${port}`);
     });
 }
