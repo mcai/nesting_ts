@@ -266,7 +266,7 @@ export function nest(
     nesting: Nesting,
     notNestedDesignDocumentParts: DesignDocumentPart[],
     raster: boolean,
-): { allNestedParts: Part[]; newlyNestedDesignDocumentParts: DesignDocumentPart[] } {
+): { newlyNestedDesignDocumentParts: DesignDocumentPart[]; allNestedParts: Part[] } {
     let newlyNestedDesignDocumentParts: DesignDocumentPart[] = [];
 
     const [sheetWidth, sheetHeight] = [nesting.sheetWidth, nesting.sheetHeight];
