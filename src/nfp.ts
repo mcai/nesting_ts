@@ -20,7 +20,7 @@ import {
 } from "./primitives";
 import { origin } from "./nesting";
 import { noFitPolygonTolerance, partToPartGap, sinkHoleCutterDiameter, tolerance } from "./utils";
-import * as ClipperLib from "clipper-lib";
+import { Clipper } from "clipper-lib";
 
 const gpu = new GPU({
     mode: "gpu",
@@ -122,7 +122,7 @@ export function adaptiveDifference(a: Point[][], b: Point[][], raster: boolean):
 export function noFitPolygon(stationaryPolygon: Polygon, orbitingPolygon: Polygon, raster: boolean): Polygon[] {
     if (!raster) {
         const minusB = orbitingPolygon.map((x) => [-x[0], -x[1]]);
-        const minkowskiSum = ClipperLib.Clipper.MinkowskiSum(
+        const minkowskiSum = Clipper.MinkowskiSum(
             stationaryPolygon.map((x) => ({ X: x[0], Y: x[1] })),
             [minusB.map((x) => ({ X: x[0], Y: x[1] }))],
             true,

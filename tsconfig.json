@@ -7,6 +7,7 @@
     "declaration": true,
     "rootDir": "./src",
     "outDir": "./build",
+    "typeRoots": [ "types", "node_modules/@types"],
     "strict": true,
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
@@ -18,6 +19,7 @@
     "src"
   ],
   "exclude": [
+    "types",
     "node_modules",
     "build"
   ]
