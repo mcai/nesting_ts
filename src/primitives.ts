@@ -133,7 +133,6 @@ export function pointToRestPoint(point: Point): RestPoint {
     };
 }
 
-// TODO: points to be converted from [x: x, y: y] to [x, y]
 export interface Entity {
     layer: string;
     nestingId: string;
